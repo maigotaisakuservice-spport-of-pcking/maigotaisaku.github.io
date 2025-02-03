@@ -125,7 +125,7 @@
             });
         }
 
-        // 既存ルートデータを使用してルート案内
+        // 既存ルート表示データを利用
         function startRoute(destination) {
             if (!destinationCoordinates) return;
 
@@ -133,11 +133,22 @@
                 map.removeControl(routeControl); // 既存ルートを削除
             }
 
-            // 既存のルート表示データを利用
+            // 目的地までのルートを計算
+            routeControl = L.Routing.control({
+                waypoints: [
+                    L.latLng(userMarker.getLatLng().lat, userMarker.getLatLng().lng),
+                    L.latLng(destination.lat, destination.lng)
+                ],
+                routeWhileDragging: true,
+                createMarker: function() { return null; } // マーカー非表示
+            }).addTo(map);
+
+            // ルート案内ステップの追加（詳細な案内）
             const existingRouteData = [
                 { instruction: "50m先、右折してください", distance: 50 },
+                { instruction: "150m先、左折してください", distance: 150 },
                 { instruction: "300m直進してください", distance: 300 },
-                { instruction: "交差点で左折してください", distance: 100 },
+                { instruction: "交差点で右折してください", distance: 100 },
                 { instruction: "目的地は右側にあります", distance: 20 }
             ];
 
