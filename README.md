@@ -1,0 +1,1 @@
+# maigotaisaku.github.io
