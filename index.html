@@ -143,8 +143,12 @@
                 createMarker: function() { return null; } // マーカー非表示
             }).addTo(map);
 
-            // OpenStreetMapのデフォルトのルート検索機能を非表示にする
-            map.removeControl(routeControl);
+            // 既存のルートを非表示にする
+            routeControl.getPlan().on('routesfound', function(event) {
+                // ルートが見つかった後、生成されたルートを背面に配置
+                var route = event.routes[0];
+                routeControl.getRouter()._routeControl._routeLayer.setZIndex(0); // ルートのレイヤーを背面に設定
+            });
 
             // ルート案内ステップの追加（詳細な案内）
             const existingRouteData = [
