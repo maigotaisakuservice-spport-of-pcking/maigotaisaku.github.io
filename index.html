@@ -6,7 +6,7 @@
     <title>絶対に迷子にならない地図</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
     <style>
-        #map { height: 100vh; z-index: 0; } /* 地図を背面に設定 */
+        #map { height: 100vh; z-index: 0; } /* 地図を最背面に設定 */
 
         /* 目的地入力フォーム */
         #destination {
@@ -82,10 +82,12 @@
             attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
 
-        // 現在地取得
-        function getLocation() {
+        // 現在地を1秒ごとに更新
+        function startLocationUpdates() {
             if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(showPosition, handleError);
+                setInterval(() => {
+                    navigator.geolocation.getCurrentPosition(showPosition, handleError);
+                }, 1000); // 1秒ごとに現在地を更新
             } else {
                 alert("GPSがサポートされていません");
             }
@@ -96,11 +98,10 @@
             var lon = position.coords.longitude;
             if (userMarker) map.removeLayer(userMarker);
             userMarker = L.marker([lat, lon]).addTo(map);
-            map.setView([lat, lon], 13);
         }
 
         function handleError(error) {
-            alert("GPSエラー: " + error.message);
+            console.warn("GPSエラー: " + error.message);
         }
 
         // 目的地設定
@@ -127,7 +128,7 @@
 
         // 既存ルート表示データを利用
         function startRoute(destination) {
-            if (!destinationCoordinates) return;
+            if (!destinationCoordinates || !userMarker) return;
 
             if (routeControl) {
                 map.removeControl(routeControl); // 既存ルートを削除
@@ -139,16 +140,9 @@
                     L.latLng(userMarker.getLatLng().lat, userMarker.getLatLng().lng),
                     L.latLng(destination.lat, destination.lng)
                 ],
-                routeWhileDragging: true,
+                routeWhileDragging: false,
                 createMarker: function() { return null; } // マーカー非表示
             }).addTo(map);
-
-            // 既存のルートを非表示にする
-            routeControl.getPlan().on('routesfound', function(event) {
-                // ルートが見つかった後、生成されたルートを背面に配置
-                var route = event.routes[0];
-                routeControl.getRouter()._routeControl._routeLayer.setZIndex(0); // ルートのレイヤーを背面に設定
-            });
 
             // ルート案内ステップの追加（詳細な案内）
             const existingRouteData = [
@@ -190,7 +184,7 @@
             routeInfo.style.display = (routeInfo.style.display === "none") ? "block" : "none";
         }
 
-        getLocation();
+        startLocationUpdates(); // 現在地の更新を開始
     </script>
 
 </body>
