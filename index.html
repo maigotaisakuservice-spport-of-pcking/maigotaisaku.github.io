@@ -143,6 +143,9 @@
                 createMarker: function() { return null; } // マーカー非表示
             }).addTo(map);
 
+            // OpenStreetMapのデフォルトのルート検索機能を非表示にする
+            map.removeControl(routeControl);
+
             // ルート案内ステップの追加（詳細な案内）
             const existingRouteData = [
                 { instruction: "50m先、右折してください", distance: 50 },
