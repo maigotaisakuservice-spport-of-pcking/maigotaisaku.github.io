@@ -76,6 +76,20 @@
         .ad-container button:hover {
             background-color: #e64a19;
         }
+         /* 情報・お問い合わせリンクボタン */
+    #infoButton {
+      position: fixed;
+      left: 10px;
+      bottom: 10px;
+      z-index: 1100;
+      background: #28a745;
+      color: white;
+      padding: 8px 12px;
+      border: none;
+      border-radius: 5px;
+      font-size: 12px;
+      cursor: pointer;
+    }
     </style>
 </head>
 <body>
@@ -117,6 +131,9 @@
                 </li>
             </ul>
         </section>
+        <button id="infoButton" onclick="window.open('Howtouse.html', '_blank')">
+    使い方の詳細はこちらから！
+        </button>
     </div>
 
     <footer>
