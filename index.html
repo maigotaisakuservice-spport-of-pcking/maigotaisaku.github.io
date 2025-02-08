@@ -7,13 +7,13 @@
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
   <style>
-    /* 地図全体の設定 */
+    /* 地図全体 */
     #map {
       height: 100vh;
       width: 100vw;
       z-index: 0;
     }
-    /* 目的地設定フォーム（常に表示） */
+    /* 目的地設定フォーム */
     #destinationForm {
       position: fixed;
       top: 10px;
@@ -101,7 +101,7 @@
     使い方の詳細はこちら、お問い合わせも含む
   </button>
   
-  <!-- Leafletおよびライブラリのスクリプト -->
+  <!-- Leafletとライブラリのスクリプト -->
   <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
   <script src="https://unpkg.com/leaflet-control-geocoder@1.13.0/dist/Control.Geocoder.js"></script>
@@ -119,7 +119,7 @@
     var destinationCoordinates = null;
     var facilityMarkers = [];
   
-    // 目的地ピンは赤いアイコンで表示する
+    // 目的地ピン用の赤いアイコン
     var redIcon = L.icon({
       iconUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSBhff5PTAut_9P--DSb_sPfi5tevBj7ts9RA&s',
       iconSize: [21, 34],
@@ -170,7 +170,7 @@
       });
     }
   
-    // ルート案内（Leaflet Routing Machineを利用）
+    // ルート案内
     function startRoute(destination) {
       if (!destinationCoordinates || !userMarker) return;
       if (routeControl) {
@@ -182,18 +182,18 @@
           destination
         ],
         routeWhileDragging: false,
-        show: false,   // デフォルトのルート案内表示はしない
+        show: false, // 既定のルート表示を非表示
         addWaypoints: false,
         createMarker: function() { return null; }
       }).addTo(map);
-      // 既存ルートレイヤーを背面に配置
+      // 生成されたルートレイヤーを背面に配置
       setTimeout(function(){
         try {
           routeControl.getRouter()._routeControl._routeLayer.setZIndex(-1);
         } catch(e){ console.error(e); }
       }, 1000);
   
-      // カスタムルート案内データの例（バリエーション追加）
+      // カスタムルート案内データ（バリエーション拡充）
       const routeData = [
         { instruction: "50m先、右折してください", distance: 50 },
         { instruction: "150m先、左折してください", distance: 150 },
@@ -201,7 +201,8 @@
         { instruction: "交差点で右折してください", distance: 100 },
         { instruction: "目的地は右側にあります", distance: 20 },
         { instruction: "その先にコンビニがあります", distance: 100 },
-        { instruction: "200m先にレストランがあります", distance: 200 }
+        { instruction: "200m先にレストランがあります", distance: 200 },
+        { instruction: "駅前を通る場合は注意してください", distance: 80 }
       ];
       displayRouteInstructions(routeData);
     }
@@ -227,7 +228,7 @@
       });
     }
   
-    // 周辺施設情報の取得（Overpass API、半径500m以内）
+    // 周辺施設情報の取得（Overpass APIを利用、半径500m以内）
     function fetchNearbyFacilities(lat, lon) {
       facilityMarkers.forEach(function(marker) { map.removeLayer(marker); });
       facilityMarkers = [];
@@ -244,13 +245,16 @@
       fetch(url)
         .then(response => response.json())
         .then(data => {
-          if (data.elements) {
+          console.log("Overpass APIデータ:", data);
+          if (data.elements && data.elements.length > 0) {
             data.elements.forEach(function(elem) {
               var marker = L.marker([elem.lat, elem.lon]).addTo(map);
               var name = elem.tags.name || (elem.tags.amenity || elem.tags.shop) || "施設";
               marker.bindPopup(name);
               facilityMarkers.push(marker);
             });
+          } else {
+            console.log("周辺施設情報が見つかりませんでした");
           }
         })
         .catch(error => console.error("周辺施設取得エラー:", error));
@@ -269,6 +273,8 @@
     }
     setInterval(fetchCongestionData, 5000);
     fetchCongestionData();
+  
+    // 最小化機能は削除済み（フォーム、パネルは常に表示）
   </script>
 </body>
 </html>
