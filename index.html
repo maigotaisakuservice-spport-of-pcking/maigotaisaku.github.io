@@ -1,206 +1,312 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>絶対に迷子にならない地図</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-    <style>
-        #map { height: 100vh; z-index: 0; } /* 地図を最背面に設定 */
-
-        /* 目的地入力フォーム */
-        #destination {
-            position: absolute;
-            bottom: 10px;
-            left: 10px;
-            z-index: 999;
-            background-color: white;
-            padding: 10px;
-            border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
-        }
-
-        /* ルート案内表示エリア */
-        #route-info {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            width: 250px;
-            max-height: 400px;
-            overflow-y: auto;
-            background-color: white;
-            padding: 10px;
-            border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
-            display: none;
-            z-index: 1000;
-        }
-
-        /* 最小化ボタン */
-        #destination-minimize, #route-info-minimize {
-            position: absolute;
-            bottom: 10px;
-            left: 10px;
-            z-index: 999;
-            background-color: #007bff;
-            color: white;
-            padding: 10px;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>絶対に迷子にならないナビ</title>
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+  <style>
+    /* 地図全体 */
+    #map {
+      height: 100vh;
+      width: 100vw;
+      z-index: 0;
+    }
+    /* 目的地設定フォーム */
+    #destinationForm {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      z-index: 1100;
+      background: rgba(255,255,255,0.95);
+      padding: 10px;
+      border-radius: 5px;
+      box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+    }
+    /* ルート案内パネル */
+    #routeInfo {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      z-index: 1100;
+      background: white;
+      padding: 10px;
+      border-radius: 5px;
+      max-height: 300px;
+      overflow-y: auto;
+      box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+      display: none;
+    }
+    /* 混雑情報パネル */
+    #congestionInfo {
+      position: fixed;
+      top: 320px;
+      right: 10px;
+      z-index: 1100;
+      background: white;
+      padding: 10px;
+      border-radius: 5px;
+      box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+      font-size: 14px;
+    }
+    /* 情報リンクボタン */
+    #infoButton {
+      position: fixed;
+      left: 10px;
+      bottom: 10px;
+      z-index: 1100;
+      background: #28a745;
+      color: white;
+      padding: 8px 12px;
+      border: none;
+      border-radius: 5px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    /* 最小化ボタン */
+    .minimizeBtn {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      padding: 3px 6px;
+      font-size: 10px;
+      cursor: pointer;
+    }
+    /* ルート案内ステップのスタイル */
+    .route-step {
+      background: white;
+      margin: 5px 0;
+      padding: 5px;
+      border-radius: 3px;
+      font-size: 13px;
+    }
+  </style>
 </head>
 <body>
+  <!-- 地図表示 -->
+  <div id="map"></div>
 
-    <div id="map"></div>
+  <!-- 目的地設定フォーム -->
+  <div id="destinationForm">
+    <button class="minimizeBtn" onclick="toggleDestinationForm()">最小化</button>
+    <input type="text" id="destinationInput" placeholder="目的地を入力">
+    <button onclick="setDestination()">目的地設定</button>
+  </div>
 
-    <div id="destination">
-        <input id="destination-input" type="text" placeholder="目的地を入力">
-        <button onclick="setDestination()">目的地設定</button>
-    </div>
+  <!-- ルート案内パネル -->
+  <div id="routeInfo">
+    <button class="minimizeBtn" onclick="toggleRouteInfo()">最小化</button>
+    <h3>ルート案内</h3>
+    <div id="routeSteps"></div>
+  </div>
 
-    <div id="destination-minimize" onclick="toggleDestination()">目的地設定</div>
+  <!-- 混雑情報パネル -->
+  <div id="congestionInfo">
+    <strong>交通状況:</strong>
+    <span id="congestionStatus">未取得</span>
+  </div>
 
-    <div id="route-info">
-        <h3>ルート案内</h3>
-        <div id="route-steps"></div>
-        
-        <!-- この下グーグル広告 -->
-        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9216007849702279"
-     crossorigin="anonymous"></script>
-<!-- test -->
-<ins class="adsbygoogle"
-     style="display:block"
-     data-ad-client="ca-pub-9216007849702279"
-     data-ad-slot="4923002693"
-     data-ad-format="auto"
-     data-full-width-responsive="true"></ins>
-<script>
-     (adsbygoogle = window.adsbygoogle || []).push({});
-</script>
-        <!-- グーグル広告ここまで！ -->
-    </div>
+  <!-- 情報リンクボタン -->
+  <button id="infoButton" onclick="window.open('Information.html', '_blank')">
+    使い方の詳細はこちら、お問い合わせも含む
+  </button>
 
-    <div id="route-info-minimize" onclick="toggleRouteInfo()">ルート案内</div>
+  <!-- Leafletとライブラリのスクリプト -->
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+  <script src="https://unpkg.com/leaflet-control-geocoder@1.13.0/dist/Control.Geocoder.js"></script>
 
-    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
-    <script src="https://unpkg.com/leaflet-control-geocoder@1.13.0/dist/Control.Geocoder.js"></script>
+  <script>
+    // 地図の初期設定（東京）
+    var map = L.map('map').setView([35.6895, 139.6917], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
 
-    <script>
-        var map = L.map('map').setView([35.6895, 139.6917], 13); // 東京をデフォルト
-        var userMarker, destinationMarker, routeControl;
-        var destinationCoordinates = null;
+    var userMarker = null;
+    var destinationMarker = null;
+    var routeControl = null;
+    var destinationCoordinates = null;
+    var facilityMarkers = [];
 
-        // OpenStreetMapのタイルを設定
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors'
-        }).addTo(map);
+    // 現在地の更新（1秒ごと）
+    function updateLocation() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(pos) {
+          var lat = pos.coords.latitude;
+          var lon = pos.coords.longitude;
+          if (!userMarker) {
+            userMarker = L.marker([lat, lon]).addTo(map).bindPopup("現在地");
+          } else {
+            userMarker.setLatLng([lat, lon]);
+          }
+          map.setView([lat, lon], 13);
+        }, function(err) {
+          console.error("GPSエラー: " + err.message);
+        });
+      }
+    }
+    setInterval(updateLocation, 1000);
+    updateLocation();
 
-        // 現在地を1秒ごとに更新
-        function startLocationUpdates() {
-            if (navigator.geolocation) {
-                setInterval(() => {
-                    navigator.geolocation.getCurrentPosition(showPosition, handleError);
-                }, 1000); // 1秒ごとに現在地を更新
-            } else {
-                alert("GPSがサポートされていません");
-            }
+    // 目的地設定（Nominatimジオコーディング）
+    function setDestination() {
+      var dest = document.getElementById("destinationInput").value;
+      if (!dest) {
+        alert("目的地を入力してください");
+        return;
+      }
+      var geocoder = new L.Control.Geocoder.Nominatim();
+      geocoder.geocode(dest, function(results) {
+        if (results.length > 0) {
+          var latlng = results[0].center;
+          destinationCoordinates = latlng;
+          if (destinationMarker) map.removeLayer(destinationMarker);
+          destinationMarker = L.marker(latlng).addTo(map).bindPopup("目的地");
+          map.setView(latlng, 13);
+          startRoute(latlng);
+          fetchNearbyFacilities(latlng.lat, latlng.lng);
+        } else {
+          alert("目的地が見つかりません");
         }
+      });
+    }
 
-        function showPosition(position) {
-            var lat = position.coords.latitude;
-            var lon = position.coords.longitude;
-            if (userMarker) map.removeLayer(userMarker);
-            userMarker = L.marker([lat, lon]).addTo(map);
-        }
+    // ルート案内（Leaflet Routing Machineを使用、既存ルートを背面に配置）
+    function startRoute(destination) {
+      if (!destinationCoordinates || !userMarker) return;
+      if (routeControl) {
+        map.removeControl(routeControl);
+      }
+      routeControl = L.Routing.control({
+        waypoints: [
+          L.latLng(userMarker.getLatLng()),
+          destination
+        ],
+        routeWhileDragging: false,
+        show: false,
+        addWaypoints: false,
+        createMarker: function() { return null; }
+      }).addTo(map);
+      // ルートレイヤーを背面に移動
+      setTimeout(function() {
+        try {
+          routeControl.getRouter()._routeControl._routeLayer.setZIndex(-1);
+        } catch (e) { console.error(e); }
+      }, 1000);
+      
+      // カスタムルート案内データ（バリエーションを増やす）
+      const routeData = [
+        { instruction: "50m先、右折してください", distance: 50 },
+        { instruction: "150m先、左折してください", distance: 150 },
+        { instruction: "300m直進してください", distance: 300 },
+        { instruction: "交差点で右折してください", distance: 100 },
+        { instruction: "目的地は右側にあります", distance: 20 },
+        { instruction: "その先にコンビニがあります", distance: 100 },
+        { instruction: "その後、レストランが200m先にあります", distance: 200 }
+      ];
+      displayRouteInstructions(routeData);
+    }
 
-        function handleError(error) {
-            console.warn("GPSエラー: " + error.message);
-        }
+    // カスタムルート案内の表示＆音声案内
+    function displayRouteInstructions(data) {
+      var stepsContainer = document.getElementById("routeSteps");
+      stepsContainer.innerHTML = "";
+      document.getElementById("routeInfo").style.display = "block";
+      data.forEach(function(step, index) {
+        var p = document.createElement("p");
+        p.className = "route-step";
+        p.textContent = step.instruction + " (" + step.distance + "m)";
+        stepsContainer.appendChild(p);
+        // 5秒間隔で音声通知
+        setTimeout(function() {
+          var utterance = new SpeechSynthesisUtterance(step.instruction);
+          utterance.lang = 'ja-JP';
+          window.speechSynthesis.speak(utterance);
+        }, index * 5000);
+      });
+    }
 
-        // 目的地設定
-        function setDestination() {
-            var destinationInput = document.getElementById('destination-input').value;
-            if (!destinationInput) {
-                alert("目的地を入力してください");
-                return;
-            }
-            var geocoder = new L.Control.Geocoder.Nominatim();
-            geocoder.geocode(destinationInput, function(results) {
-                if (results.length > 0) {
-                    var latlng = results[0].center;
-                    if (destinationMarker) map.removeLayer(destinationMarker);
-                    destinationCoordinates = latlng;
-                    destinationMarker = L.marker(latlng).addTo(map);
-                    map.setView(latlng, 13);
-                    startRoute(latlng);
-                } else {
-                    alert("目的地が見つかりません");
-                }
+    // 周辺施設情報の取得（Overpass APIを使用、半径500m以内）
+    function fetchNearbyFacilities(lat, lon) {
+      // 既存の施設マーカー削除
+      facilityMarkers.forEach(function(marker) { map.removeLayer(marker); });
+      facilityMarkers = [];
+      var query = `
+        [out:json];
+        (
+          node["amenity"="restaurant"](around:500,${lat},${lon});
+          node["amenity"="cafe"](around:500,${lat},${lon});
+          node["shop"="convenience"](around:500,${lat},${lon});
+        );
+        out;
+      `;
+      var url = "https://overpass-api.de/api/interpreter?data=" + encodeURIComponent(query);
+      fetch(url)
+        .then(response => response.json())
+        .then(data => {
+          if (data.elements) {
+            data.elements.forEach(function(elem) {
+              var marker = L.marker([elem.lat, elem.lon]).addTo(map);
+              var name = elem.tags.name || (elem.tags.amenity || elem.tags.shop) || "施設";
+              marker.bindPopup(name);
+              facilityMarkers.push(marker);
             });
-        }
+          }
+        })
+        .catch(error => console.error("周辺施設取得エラー:", error));
+    }
 
-        // 既存ルート表示データを利用
-        function startRoute(destination) {
-            if (!destinationCoordinates || !userMarker) return;
+    // 混雑情報の取得（無料APIシミュレーション：ランダムで生成）
+    function fetchCongestionData() {
+      // シミュレーション用：ランダムに状態を決定
+      const statuses = ["渋滞なし", "普通", "混雑"];
+      const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
+      document.getElementById("congestionStatus").textContent = randomStatus;
+      // スマート通知：混雑なら音声通知
+      if (randomStatus === "混雑") {
+        var utterance = new SpeechSynthesisUtterance("現在、混雑しています。別ルートを検討してください。");
+        utterance.lang = 'ja-JP';
+        window.speechSynthesis.speak(utterance);
+      }
+    }
+    setInterval(fetchCongestionData, 5000);
+    fetchCongestionData();
 
-            if (routeControl) {
-                map.removeControl(routeControl); // 既存ルートを削除
-            }
+    // 最小化機能（目的地設定フォーム）
+    function toggleDestinationForm() {
+      var form = document.getElementById("destinationForm");
+      form.style.display = (form.style.display === "none") ? "block" : "none";
+    }
+    // 最小化機能（ルート案内パネル）
+    function toggleRouteInfo() {
+      var panel = document.getElementById("routeInfo");
+      panel.style.display = (panel.style.display === "none") ? "block" : "none";
+    }
 
-            // 目的地までのルートを計算
-            routeControl = L.Routing.control({
-                waypoints: [
-                    L.latLng(userMarker.getLatLng().lat, userMarker.getLatLng().lng),
-                    L.latLng(destination.lat, destination.lng)
-                ],
-                routeWhileDragging: false,
-                createMarker: function() { return null; } // マーカー非表示
-            }).addTo(map);
-
-            // ルート案内ステップの追加（詳細な案内）
-            const existingRouteData = [
-                { instruction: "50m先、右折してください", distance: 50 },
-                { instruction: "150m先、左折してください", distance: 150 },
-                { instruction: "300m直進してください", distance: 300 },
-                { instruction: "交差点で右折してください", distance: 100 },
-                { instruction: "目的地は右側にあります", distance: 20 }
-            ];
-
-            displayRouteInstructions(existingRouteData);
-        }
-
-        // ルート案内表示＆音声案内
-        function displayRouteInstructions(routeData) {
-            const routeStepsElement = document.getElementById('route-steps');
-            routeStepsElement.innerHTML = ""; // 既存の案内をクリア
-            document.getElementById('route-info').style.display = "block";
-
-            routeData.forEach(step => {
-                const stepElement = document.createElement('p');
-                stepElement.textContent = step.instruction;
-                routeStepsElement.appendChild(stepElement);
-
-                // 音声案内
-                const utterance = new SpeechSynthesisUtterance(step.instruction);
-                speechSynthesis.speak(utterance);
-            });
-        }
-
-        // 最小化機能
-        function toggleDestination() {
-            var destination = document.getElementById('destination');
-            destination.style.display = (destination.style.display === "none") ? "block" : "none";
-        }
-
-        function toggleRouteInfo() {
-            var routeInfo = document.getElementById('route-info');
-            routeInfo.style.display = (routeInfo.style.display === "none") ? "block" : "none";
-        }
-
-        startLocationUpdates(); // 現在地の更新を開始
-    </script>
-
+    // 情報ページリンクボタンは #infoButton 内で実装
+    // 初期位置取得
+    (function(){
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(pos) {
+          var lat = pos.coords.latitude;
+          var lon = pos.coords.longitude;
+          if (!userMarker) {
+            userMarker = L.marker([lat, lon]).addTo(map).bindPopup("現在地");
+          } else {
+            userMarker.setLatLng([lat, lon]);
+          }
+          map.setView([lat, lon], 13);
+        }, function(err) {
+          console.error("GPSエラー: " + err.message);
+        });
+      }
+    })();
+  </script>
 </body>
 </html>
