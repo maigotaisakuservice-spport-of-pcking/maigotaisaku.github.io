@@ -13,7 +13,7 @@
       width: 100vw;
       z-index: 0;
     }
-    /* 目的地設定フォーム */
+    /* 目的地設定フォーム（常に表示） */
     #destinationForm {
       position: fixed;
       top: 10px;
@@ -24,7 +24,7 @@
       border-radius: 5px;
       box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
     }
-    /* ルート案内パネル */
+    /* ルート案内パネル（最初は非表示） */
     #routeInfo {
       position: fixed;
       top: 10px;
@@ -50,7 +50,7 @@
       box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
       font-size: 14px;
     }
-    /* 情報・お問い合わせリンクボタン */
+    /* 情報リンクボタン（左下） */
     #infoButton {
       position: fixed;
       left: 10px;
@@ -64,13 +64,48 @@
       font-size: 12px;
       cursor: pointer;
     }
-    /* ルート案内ステップのスタイル */
+    /* コンパス表示ボタン（右下） */
+    #compassButton {
+      position: fixed;
+      right: 10px;
+      bottom: 10px;
+      z-index: 1100;
+      background: #FFA500;
+      color: white;
+      padding: 8px 12px;
+      border: none;
+      border-radius: 5px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    /* コンパス表示オーバーレイ */
+    #compassDisplay {
+      position: fixed;
+      right: 10px;
+      bottom: 60px;
+      z-index: 1200;
+      background: rgba(255,255,255,0.9);
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      padding: 5px;
+      display: none;
+      text-align: center;
+      font-size: 14px;
+    }
+    /* ルート案内ステップのスタイル（背景白、画像付き） */
     .route-step {
       background: white;
       margin: 5px 0;
       padding: 5px;
       border-radius: 3px;
       font-size: 13px;
+      display: flex;
+      align-items: center;
+    }
+    .route-step img {
+      width: 20px;
+      height: 20px;
+      margin-right: 5px;
     }
   </style>
 </head>
@@ -80,7 +115,7 @@
   
   <!-- 目的地設定フォーム -->
   <div id="destinationForm">
-    <input type="text" id="destinationInput" placeholder="目的地を入力">
+    <input type="text" id="destinationInput" placeholder="目的地を入力 (複数はカンマ区切り)">
     <button onclick="setDestination()">目的地設定</button>
   </div>
   
@@ -92,8 +127,7 @@
   
   <!-- 混雑情報パネル -->
   <div id="congestionInfo">
-    <strong>交通状況:</strong>
-    <span id="congestionStatus">未取得</span>
+    <strong>交通状況:</strong> <span id="congestionStatus">未取得</span>
   </div>
   
   <!-- 情報・お問い合わせリンクボタン -->
@@ -101,13 +135,18 @@
     使い方の詳細はこちら、お問い合わせも含む
   </button>
   
-  <!-- Leafletとライブラリのスクリプト -->
+  <!-- コンパス表示ボタン -->
+  <button id="compassButton" onclick="toggleCompass()">コンパス</button>
+  <!-- コンパス表示オーバーレイ -->
+  <div id="compassDisplay">方位: <span id="compassHeading">--°</span></div>
+  
+  <!-- Leaflet, Routing Machine, Geocoder のスクリプト -->
   <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
   <script src="https://unpkg.com/leaflet-control-geocoder@1.13.0/dist/Control.Geocoder.js"></script>
   
   <script>
-    // 地図の初期設定（東京）
+    // 地図初期設定（東京）
     var map = L.map('map').setView([35.6895, 139.6917], 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors'
@@ -119,15 +158,15 @@
     var destinationCoordinates = null;
     var facilityMarkers = [];
   
-    // 目的地ピン用の赤いアイコン
+    // 目的地ピン用赤いアイコン
     var redIcon = L.icon({
-      iconUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSBhff5PTAut_9P--DSb_sPfi5tevBj7ts9RA&s',
+      iconUrl: 'https://chart.googleapis.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|FF0000',
       iconSize: [21, 34],
       iconAnchor: [10, 34],
       popupAnchor: [0, -28]
     });
   
-    // 現在地を1秒ごとに更新
+    // 現在地の更新（1秒ごと）
     function updateLocation() {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(function(pos) {
@@ -147,45 +186,56 @@
     setInterval(updateLocation, 1000);
     updateLocation();
   
-    // 目的地設定（Nominatimジオコーディング）
+    // 目的地設定（複数地点対応：カンマ区切り）
     function setDestination() {
-      var dest = document.getElementById("destinationInput").value;
-      if (!dest) {
+      var destInput = document.getElementById("destinationInput").value;
+      if (!destInput) {
         alert("目的地を入力してください");
         return;
       }
+      var addresses = destInput.split(",").map(function(a) { return a.trim(); });
       var geocoder = new L.Control.Geocoder.Nominatim();
-      geocoder.geocode(dest, function(results) {
-        if (results.length > 0) {
-          var latlng = results[0].center;
-          destinationCoordinates = latlng;
-          if (destinationMarker) map.removeLayer(destinationMarker);
-          destinationMarker = L.marker(latlng, { icon: redIcon }).addTo(map).bindPopup("目的地");
-          map.setView(latlng, 13);
-          startRoute(latlng);
-          fetchNearbyFacilities(latlng.lat, latlng.lon);
-        } else {
-          alert("目的地が見つかりません");
-        }
+      var geocodePromises = addresses.map(function(address) {
+        return new Promise(function(resolve, reject) {
+          geocoder.geocode(address, function(results) {
+            if (results && results.length > 0) {
+              resolve(results[0].center);
+            } else {
+              reject("住所が見つかりません: " + address);
+            }
+          });
+        });
       });
+      Promise.all(geocodePromises)
+        .then(function(results) {
+          var waypoints = results;
+          destinationCoordinates = waypoints[waypoints.length - 1]; // 最後を目的地（優先度1）
+          if (destinationMarker) map.removeLayer(destinationMarker);
+          destinationMarker = L.marker(destinationCoordinates, { icon: redIcon })
+                              .addTo(map).bindPopup("目的地");
+          map.setView(destinationCoordinates, 13);
+          startRoute(waypoints);
+          fetchNearbyFacilities(destinationCoordinates.lat, destinationCoordinates.lng);
+        })
+        .catch(function(error) {
+          alert(error);
+        });
     }
   
-    // ルート案内
-    function startRoute(destination) {
-      if (!destinationCoordinates || !userMarker) return;
+    // ルート案内（生成されたルートレイヤーから指示データを取得して表示）
+    function startRoute(waypoints) {
+      if (!waypoints || !userMarker) return;
       if (routeControl) {
         map.removeControl(routeControl);
       }
       routeControl = L.Routing.control({
-        waypoints: [
-          L.latLng(userMarker.getLatLng()),
-          destination
-        ],
+        waypoints: [L.latLng(userMarker.getLatLng())].concat(waypoints),
         routeWhileDragging: false,
-        show: false, // 既定のルート表示を非表示
+        show: false,
         addWaypoints: false,
         createMarker: function() { return null; }
       }).addTo(map);
+  
       // 生成されたルートレイヤーを背面に配置
       setTimeout(function(){
         try {
@@ -193,21 +243,23 @@
         } catch(e){ console.error(e); }
       }, 1000);
   
-      // カスタムルート案内データ（バリエーション拡充）
-      const routeData = [
-        { instruction: "50m先、右折してください", distance: 50 },
-        { instruction: "150m先、左折してください", distance: 150 },
-        { instruction: "300m直進してください", distance: 300 },
-        { instruction: "交差点で右折してください", distance: 100 },
-        { instruction: "目的地は右側にあります", distance: 20 },
-        { instruction: "その先にコンビニがあります", distance: 100 },
-        { instruction: "200m先にレストランがあります", distance: 200 },
-        { instruction: "駅前を通る場合は注意してください", distance: 80 }
-      ];
-      displayRouteInstructions(routeData);
+      // 生成されたルートのデータを取得して、独自のルート案内パネルに表示
+      routeControl.on('routesfound', function(e) {
+        var route = e.routes[0];
+        var instructions = [];
+        route.legs.forEach(function(leg) {
+          leg.steps.forEach(function(step) {
+            instructions.push({
+              instruction: step.maneuver.instruction,
+              distance: step.distance
+            });
+          });
+        });
+        displayRouteInstructions(instructions);
+      });
     }
   
-    // カスタムルート案内表示＆音声通知
+    // 独自ルート案内の表示＆音声通知（画像付き）
     function displayRouteInstructions(data) {
       var stepsContainer = document.getElementById("routeSteps");
       stepsContainer.innerHTML = "";
@@ -216,7 +268,13 @@
       data.forEach(function(step, index) {
         var p = document.createElement("p");
         p.className = "route-step";
-        p.textContent = step.instruction + " (" + step.distance + "m)";
+        var iconUrl = getInstructionIcon(step.instruction);
+        var img = document.createElement("img");
+        img.src = iconUrl;
+        p.appendChild(img);
+        var span = document.createElement("span");
+        span.textContent = step.instruction + " (" + Math.round(step.distance) + "m)";
+        p.appendChild(span);
         stepsContainer.appendChild(p);
   
         // 5秒間隔で音声通知
@@ -228,7 +286,20 @@
       });
     }
   
-    // 周辺施設情報の取得（Overpass APIを利用、半径500m以内）
+    // 指示に応じた画像URLを返す関数
+    function getInstructionIcon(instruction) {
+      if (instruction.indexOf("右折") !== -1) {
+        return "https://cdn-icons-png.flaticon.com/512/271/271228.png";
+      } else if (instruction.indexOf("左折") !== -1) {
+        return "https://cdn-icons-png.flaticon.com/512/271/271220.png";
+      } else if (instruction.indexOf("直進") !== -1) {
+        return "https://cdn-icons-png.flaticon.com/512/271/271210.png";
+      } else {
+        return "https://cdn-icons-png.flaticon.com/512/595/595553.png";
+      }
+    }
+  
+    // 周辺施設情報の取得（Overpass API、半径500m以内）
     function fetchNearbyFacilities(lat, lon) {
       facilityMarkers.forEach(function(marker) { map.removeLayer(marker); });
       facilityMarkers = [];
@@ -245,7 +316,7 @@
       fetch(url)
         .then(response => response.json())
         .then(data => {
-          console.log("Overpass APIデータ:", data);
+          console.log("周辺施設データ:", data);
           if (data.elements && data.elements.length > 0) {
             data.elements.forEach(function(elem) {
               var marker = L.marker([elem.lat, elem.lon]).addTo(map);
@@ -260,21 +331,48 @@
         .catch(error => console.error("周辺施設取得エラー:", error));
     }
   
-    // 混雑情報の取得（無料APIシミュレーション：ランダム生成）
+    // 混雑情報の取得（Open511 API を使用、本番エンドポイント例）
     function fetchCongestionData() {
-      const statuses = ["渋滞なし", "普通", "混雑"];
-      const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
-      document.getElementById("congestionStatus").textContent = randomStatus;
-      if (randomStatus === "混雑") {
-        var utterance = new SpeechSynthesisUtterance("現在、混雑しています。別ルートを検討してください。");
-        utterance.lang = 'ja-JP';
-        window.speechSynthesis.speak(utterance);
-      }
+      var lat = userMarker ? userMarker.getLatLng().lat : 35.6895;
+      var lon = userMarker ? userMarker.getLatLng().lng : 139.6917;
+      var url = "https://open511.org/events?point=" + lat + "," + lon + "&radius=500";
+      fetch(url)
+        .then(response => response.json())
+        .then(data => {
+          // Open511 はイベント情報を返すので、イベントがあれば混雑と判断
+          var status = (data.events && data.events.length > 0) ? "混雑" : "渋滞なし";
+          document.getElementById("congestionStatus").textContent = status;
+          if (status === "混雑") {
+            var utterance = new SpeechSynthesisUtterance("現在、混雑しています。別ルートを検討してください。");
+            utterance.lang = 'ja-JP';
+            window.speechSynthesis.speak(utterance);
+          }
+        })
+        .catch(error => {
+          console.error("混雑情報取得エラー:", error);
+          document.getElementById("congestionStatus").textContent = "取得エラー";
+        });
     }
     setInterval(fetchCongestionData, 5000);
     fetchCongestionData();
   
-    // 最小化機能は削除済み（フォーム、パネルは常に表示）
+    // コンパス表示機能
+    var compassVisible = false;
+    function toggleCompass() {
+      var comp = document.getElementById("compassDisplay");
+      compassVisible = !compassVisible;
+      comp.style.display = compassVisible ? "block" : "none";
+    }
+    if (window.DeviceOrientationEvent) {
+      window.addEventListener("deviceorientation", function(event) {
+        var heading = event.alpha;
+        if (heading !== null) {
+          document.getElementById("compassHeading").textContent = Math.round(heading) + "°";
+        }
+      }, true);
+    } else {
+      document.getElementById("compassHeading").textContent = "未対応";
+    }
   </script>
 </body>
 </html>
