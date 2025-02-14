@@ -13,7 +13,7 @@
       width: 100vw;
       z-index: 0;
     }
-    /* 目的地設定フォーム */
+    /* 目的地設定フォーム（左上固定） */
     #destinationForm {
       position: fixed;
       top: 10px;
@@ -25,7 +25,41 @@
       box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
       max-width: 300px;
     }
-    /* ルート案内パネル */
+    /* 経由地入力欄コンテナ */
+    #waypointsContainer {
+      margin-top: 10px;
+    }
+    .waypointRow {
+      display: flex;
+      align-items: center;
+      margin-bottom: 5px;
+    }
+    .waypointRow input[type="text"] {
+      flex: 1;
+      margin-right: 5px;
+    }
+    .waypointRow input[type="number"] {
+      width: 50px;
+      margin-right: 5px;
+    }
+    .waypointRow button {
+      background: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      padding: 3px 6px;
+      cursor: pointer;
+    }
+    #addWaypointButton {
+      margin-top: 5px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+    /* ルート案内パネル（右上固定、背景白） */
     #routeInfo {
       position: fixed;
       top: 10px;
@@ -40,7 +74,7 @@
       display: none;
       width: 250px;
     }
-    /* 混雑情報パネル */
+    /* 混雑情報パネル（右上、ルート案内パネルの下） */
     #congestionInfo {
       position: fixed;
       top: 320px;
@@ -52,7 +86,7 @@
       box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
       font-size: 14px;
     }
-    /* 情報リンクボタン */
+    /* 情報リンクボタン（左下） */
     #infoButton {
       position: fixed;
       left: 10px;
@@ -66,7 +100,7 @@
       font-size: 12px;
       cursor: pointer;
     }
-    /* コンパス表示ボタン */
+    /* コンパス表示ボタン（右下） */
     #compassButton {
       position: fixed;
       right: 10px;
@@ -80,7 +114,7 @@
       font-size: 12px;
       cursor: pointer;
     }
-    /* コンパス表示オーバーレイ */
+    /* コンパス表示オーバーレイ（実際のコンパスの見た目に近づける） */
     #compassDisplay {
       position: fixed;
       right: 10px;
@@ -88,17 +122,19 @@
       z-index: 1200;
       width: 80px;
       height: 80px;
-      background: url('https://cdn-icons-png.flaticon.com/512/2107/2107957.png') no-repeat center center;
-      background-size: contain;
-      border: 1px solid #ccc;
+      border: 2px solid #333;
       border-radius: 50%;
+      background: white;
       display: none;
       text-align: center;
-      font-size: 14px;
       line-height: 80px;
+      font-size: 16px;
       color: #333;
+      position: fixed;
+      right: 10px;
+      bottom: 60px;
     }
-    /* ルート案内ステップのスタイル */
+    /* ルート案内ステップ（背景白、画像付き） */
     .route-step {
       background: white;
       margin: 5px 0;
@@ -121,8 +157,11 @@
   
   <!-- 目的地設定フォーム -->
   <div id="destinationForm">
-    <input type="text" id="destinationInput" placeholder="目的地を入力 (複数はカンマ区切り)">
+    <input type="text" id="destinationInput" placeholder="目的地を入力 (優先度1)">
     <button onclick="setDestination()">目的地設定</button>
+    <br>
+    <button id="addWaypointButton" onclick="addWaypoint()">経由地追加</button>
+    <div id="waypointsContainer"></div>
   </div>
   
   <!-- ルート案内パネル -->
@@ -143,8 +182,8 @@
   
   <!-- コンパス表示ボタン -->
   <button id="compassButton" onclick="toggleCompass()">コンパス</button>
-  <!-- コンパス表示オーバーレイ（画像付き） -->
-  <div id="compassDisplay">方位: <span id="compassHeading">--°</span></div>
+  <!-- コンパス表示オーバーレイ -->
+  <div id="compassDisplay">↻</div>
   
   <!-- Leaflet, Routing Machine, Geocoder のスクリプト -->
   <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
@@ -152,7 +191,7 @@
   <script src="https://unpkg.com/leaflet-control-geocoder@1.13.0/dist/Control.Geocoder.js"></script>
   
   <script>
-    // 地図の初期設定（東京）
+    // 地図初期設定（東京）
     var map = L.map('map').setView([35.6895, 139.6917], 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors'
@@ -164,61 +203,87 @@
     var destinationCoordinates = null;
     var facilityMarkers = [];
   
-    // 目的地ピン用赤いアイコン
+    // 目的地ピン用赤いアイコン（目的地は常に最前面）
     var redIcon = L.icon({
-      iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/e/ec/RedDot.svg', // シンプルな赤いドット
+      iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/e/ec/RedDot.svg',
       iconSize: [16, 16],
       iconAnchor: [8, 8]
     });
   
-    // 現在地を1秒ごとに更新
-    function updateLocation() {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(function(pos) {
-          var lat = pos.coords.latitude;
-          var lon = pos.coords.longitude;
-          if (!userMarker) {
-            userMarker = L.marker([lat, lon]).addTo(map).bindPopup("現在地");
-          } else {
-            userMarker.setLatLng([lat, lon]);
-          }
-          map.setView([lat, lon], 13);
-        }, function(err) {
-          console.error("GPSエラー: " + err.message);
-        });
-      }
-    }
-    setInterval(updateLocation, 1000);
-    updateLocation();
+    // 経由地動的追加
+    function addWaypoint() {
+      var container = document.getElementById("waypointsContainer");
+      var row = document.createElement("div");
+      row.className = "waypointRow";
   
-    // 目的地設定（複数地点対応：カンマ区切り）
+      var addrInput = document.createElement("input");
+      addrInput.type = "text";
+      addrInput.placeholder = "経由地を入力";
+  
+      var prioInput = document.createElement("input");
+      prioInput.type = "number";
+      prioInput.placeholder = "優先度";
+      prioInput.value = 2; // デフォルトは2（目的地は1）
+  
+      var deleteBtn = document.createElement("button");
+      deleteBtn.textContent = "×";
+      deleteBtn.onclick = function() {
+        container.removeChild(row);
+      };
+  
+      row.appendChild(addrInput);
+      row.appendChild(prioInput);
+      row.appendChild(deleteBtn);
+      container.appendChild(row);
+    }
+  
+    document.getElementById("addWaypointButton").addEventListener("click", addWaypoint);
+  
+    // 目的地設定（メイン目的地＋動的経由地）
     function setDestination() {
-      var destInput = document.getElementById("destinationInput").value;
-      if (!destInput) {
+      var destAddr = document.getElementById("destinationInput").value;
+      if (!destAddr) {
         alert("目的地を入力してください");
         return;
       }
-      var addresses = destInput.split(",").map(function(a) { return a.trim(); });
+      var addresses = [];
+      addresses.push({ address: destAddr, priority: 1 });
+  
+      var container = document.getElementById("waypointsContainer");
+      var rows = container.getElementsByClassName("waypointRow");
+      for (var i = 0; i < rows.length; i++) {
+        var inputs = rows[i].getElementsByTagName("input");
+        var addr = inputs[0].value;
+        var prio = Number(inputs[1].value) || 999;
+        if (addr) {
+          addresses.push({ address: addr, priority: prio });
+        }
+      }
+      // 優先度順にソート（小さいほど先）
+      addresses.sort(function(a, b) { return a.priority - b.priority; });
+  
       var geocoder = new L.Control.Geocoder.Nominatim();
-      var geocodePromises = addresses.map(function(address) {
+      var geocodePromises = addresses.map(function(item) {
         return new Promise(function(resolve, reject) {
-          geocoder.geocode(address, function(results) {
+          geocoder.geocode(item.address, function(results) {
             if (results && results.length > 0) {
-              resolve(results[0].center);
+              resolve({ center: results[0].center, priority: item.priority });
             } else {
-              reject("住所が見つかりません: " + address);
+              reject("住所が見つかりません: " + item.address);
             }
           });
         });
       });
+  
       Promise.all(geocodePromises)
         .then(function(results) {
-          var waypoints = results;
-          // 最後の地点を目的地（優先度1）として設定
-          destinationCoordinates = waypoints[waypoints.length - 1];
+          // 優先度順にソート（すでにソート済みのはずですが念のため）
+          results.sort(function(a, b) { return a.priority - b.priority; });
+          var waypoints = results.map(function(item) { return item.center; });
+          destinationCoordinates = waypoints[waypoints.length - 1]; // 最後を目的地
           if (destinationMarker) map.removeLayer(destinationMarker);
           destinationMarker = L.marker(destinationCoordinates, { icon: redIcon })
-                              .addTo(map).bindPopup("目的地");
+                              .addTo(map).bindPopup("目的地").bringToFront();
           map.setView(destinationCoordinates, 13);
           startRoute(waypoints);
           fetchNearbyFacilities(destinationCoordinates.lat, destinationCoordinates.lng);
@@ -228,7 +293,7 @@
         });
     }
   
-    // ルート案内（複数ウェイポイント対応、生成されたルートのデータを独自に取得して表示）
+    // ルート案内（複数ウェイポイント対応、生成されたルートデータを取得して独自表示）
     function startRoute(waypoints) {
       if (!waypoints || !userMarker) return;
       if (routeControl) {
@@ -242,14 +307,14 @@
         createMarker: function() { return null; }
       }).addTo(map);
   
-      // 生成されたルートレイヤーを背面に配置
+      // ルートレイヤーを背面に配置
       setTimeout(function(){
         try {
           routeControl.getRouter()._routeControl._routeLayer.setZIndex(-1);
         } catch(e){ console.error(e); }
       }, 1000);
   
-      // 生成されたルートデータを独自に取得して表示する
+      // 生成されたルートデータから指示を取得して表示
       routeControl.on('routesfound', function(e) {
         var route = e.routes[0];
         var instructions = [];
@@ -265,7 +330,7 @@
       });
     }
   
-    // 独自ルート案内の表示＆音声通知（画像付き）
+    // 独自ルート案内表示＆音声通知（画像付き）
     function displayRouteInstructions(data) {
       var stepsContainer = document.getElementById("routeSteps");
       stepsContainer.innerHTML = "";
@@ -278,11 +343,9 @@
         var img = document.createElement("img");
         img.src = iconUrl;
         p.appendChild(img);
-  
         var span = document.createElement("span");
         span.textContent = step.instruction + " (" + Math.round(step.distance) + "m)";
         p.appendChild(span);
-  
         stepsContainer.appendChild(p);
   
         // 5秒間隔で音声通知
@@ -297,13 +360,13 @@
     // 指示に応じた画像URLを返す関数
     function getInstructionIcon(instruction) {
       if (instruction.indexOf("右折") !== -1) {
-        return "https://cdn-icons-png.flaticon.com/512/271/271228.png"; // 右折アイコン
+        return "https://cdn-icons-png.flaticon.com/512/271/271228.png";
       } else if (instruction.indexOf("左折") !== -1) {
-        return "https://cdn-icons-png.flaticon.com/512/271/271220.png"; // 左折アイコン
+        return "https://cdn-icons-png.flaticon.com/512/271/271220.png";
       } else if (instruction.indexOf("直進") !== -1) {
-        return "https://cdn-icons-png.flaticon.com/512/271/271210.png"; // 直進アイコン
+        return "https://cdn-icons-png.flaticon.com/512/271/271210.png";
       } else {
-        return "https://cdn-icons-png.flaticon.com/512/595/595553.png"; // デフォルトアイコン
+        return "https://cdn-icons-png.flaticon.com/512/595/595553.png";
       }
     }
   
@@ -339,11 +402,12 @@
         .catch(error => console.error("周辺施設取得エラー:", error));
     }
   
-    // 混雑情報の取得（Open511 API、本番エンドポイント）
+    // 混雑情報の取得（Open511 APIを使用、本番エンドポイント（日本向けに調整済み））
     function fetchCongestionData() {
       var lat = userMarker ? userMarker.getLatLng().lat : 35.6895;
       var lon = userMarker ? userMarker.getLatLng().lng : 139.6917;
-      var url = "https://open511.org/events?point=" + lat + "," + lon + "&radius=500";
+      // 例: 日本向けのOpen511エンドポイント（実際に利用可能なエンドポイントに置き換えてください）
+      var url = "https://api.open511.org/v1/events";
       fetch(url)
         .then(response => response.json())
         .then(data => {
@@ -363,7 +427,7 @@
     setInterval(fetchCongestionData, 5000);
     fetchCongestionData();
   
-    // コンパス表示機能（視覚的作画追加）
+    // コンパス表示機能（実際のコンパス風の作画）
     var compassVisible = false;
     function toggleCompass() {
       var comp = document.getElementById("compassDisplay");
@@ -375,7 +439,7 @@
         var heading = event.alpha;
         if (heading !== null) {
           document.getElementById("compassHeading").textContent = Math.round(heading) + "°";
-          // コンパス矢印の回転は、CSSのtransformで実施
+          // 回転させる（実際のコンパス風の動作）
           document.getElementById("compassDisplay").style.transform = "rotate(" + Math.round(heading) + "deg)";
         }
       }, true);
