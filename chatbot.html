@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>迷子案内ボット</title>
-    <link rel="stylesheet" href="https://pyscript.net/alpha/pyscript.css" />
-    <script defer src="https://pyscript.net/alpha/pyscript.js"></script>
+    <link rel="stylesheet" href="https://pyscript.net/latest/pyscript.css" />
+     <script defer src="https://pyscript.net/latest/pyscript.js"></script>
     <style>
         .button { border-radius: 50%; padding: 15px; margin: 10px; }
         #addressForm, #inquiryMessage { display: none; }
@@ -33,7 +33,7 @@
     </div>
 
     <py-script>
-        import requests
+      import requests
 
         def get_coordinates(address):
             url = f'https://nominatim.openstreetmap.org/search?q={address}&format=json'
