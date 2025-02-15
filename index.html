@@ -74,7 +74,7 @@
       display: none;
       width: 250px;
     }
-    /* 混雑情報パネル（右上、ルート案内パネルの下） */
+    /* 混雑情報パネル */
     #congestionInfo {
       position: fixed;
       top: 320px;
@@ -114,7 +114,7 @@
       font-size: 12px;
       cursor: pointer;
     }
-    /* コンパス表示オーバーレイ（実際のコンパスの見た目に近づける） */
+    /* コンパス表示オーバーレイ（実際のコンパス風の円形、背景画像付き） */
     #compassDisplay {
       position: fixed;
       right: 10px;
@@ -122,19 +122,11 @@
       z-index: 1200;
       width: 80px;
       height: 80px;
-      border: 2px solid #333;
-      border-radius: 50%;
-      background: white;
+      background: url('https://upload.wikimedia.org/wikipedia/commons/3/32/Compass_rose_simple.svg') no-repeat center center;
+      background-size: cover;
       display: none;
-      text-align: center;
-      line-height: 80px;
-      font-size: 16px;
-      color: #333;
-      position: fixed;
-      right: 10px;
-      bottom: 60px;
     }
-    /* ルート案内ステップ（背景白、画像付き） */
+    /* ルート案内ステップのスタイル（背景白、画像付き） */
     .route-step {
       background: white;
       margin: 5px 0;
@@ -183,7 +175,7 @@
   <!-- コンパス表示ボタン -->
   <button id="compassButton" onclick="toggleCompass()">コンパス</button>
   <!-- コンパス表示オーバーレイ -->
-  <div id="compassDisplay">↻</div>
+  <div id="compassDisplay"></div>
   
   <!-- Leaflet, Routing Machine, Geocoder のスクリプト -->
   <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
@@ -203,14 +195,14 @@
     var destinationCoordinates = null;
     var facilityMarkers = [];
   
-    // 目的地ピン用赤いアイコン（目的地は常に最前面）
+    // 目的地ピン用赤いアイコン（別画像）
     var redIcon = L.icon({
-      iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/e/ec/RedDot.svg',
-      iconSize: [16, 16],
-      iconAnchor: [8, 8]
+      iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/8/8d/Map_pin_icon_red.svg',
+      iconSize: [24, 24],
+      iconAnchor: [12, 12]
     });
   
-    // 経由地動的追加
+    // 経由地動的追加（住所＋優先度＋削除ボタン）
     function addWaypoint() {
       var container = document.getElementById("waypointsContainer");
       var row = document.createElement("div");
@@ -223,7 +215,7 @@
       var prioInput = document.createElement("input");
       prioInput.type = "number";
       prioInput.placeholder = "優先度";
-      prioInput.value = 2; // デフォルトは2（目的地は1）
+      prioInput.value = 2; // 目的地は1
   
       var deleteBtn = document.createElement("button");
       deleteBtn.textContent = "×";
@@ -236,10 +228,9 @@
       row.appendChild(deleteBtn);
       container.appendChild(row);
     }
-  
     document.getElementById("addWaypointButton").addEventListener("click", addWaypoint);
   
-    // 目的地設定（メイン目的地＋動的経由地）
+    // 目的地設定＋複数経由地対応
     function setDestination() {
       var destAddr = document.getElementById("destinationInput").value;
       if (!destAddr) {
@@ -247,8 +238,7 @@
         return;
       }
       var addresses = [];
-      addresses.push({ address: destAddr, priority: 1 });
-  
+      addresses.push({ address: destAddr, priority: 1 }); // 目的地は優先度1
       var container = document.getElementById("waypointsContainer");
       var rows = container.getElementsByClassName("waypointRow");
       for (var i = 0; i < rows.length; i++) {
@@ -274,13 +264,11 @@
           });
         });
       });
-  
       Promise.all(geocodePromises)
         .then(function(results) {
-          // 優先度順にソート（すでにソート済みのはずですが念のため）
           results.sort(function(a, b) { return a.priority - b.priority; });
           var waypoints = results.map(function(item) { return item.center; });
-          destinationCoordinates = waypoints[waypoints.length - 1]; // 最後を目的地
+          destinationCoordinates = waypoints[waypoints.length - 1]; // 最後が目的地
           if (destinationMarker) map.removeLayer(destinationMarker);
           destinationMarker = L.marker(destinationCoordinates, { icon: redIcon })
                               .addTo(map).bindPopup("目的地").bringToFront();
@@ -293,7 +281,7 @@
         });
     }
   
-    // ルート案内（複数ウェイポイント対応、生成されたルートデータを取得して独自表示）
+    // ルート案内（複数ウェイポイント対応、生成されたルートデータを独自に取得して表示）
     function startRoute(waypoints) {
       if (!waypoints || !userMarker) return;
       if (routeControl) {
@@ -306,15 +294,14 @@
         addWaypoints: false,
         createMarker: function() { return null; }
       }).addTo(map);
-  
-      // ルートレイヤーを背面に配置
+      // 生成されたルートレイヤーを背面に配置
       setTimeout(function(){
         try {
           routeControl.getRouter()._routeControl._routeLayer.setZIndex(-1);
         } catch(e){ console.error(e); }
       }, 1000);
   
-      // 生成されたルートデータから指示を取得して表示
+      // 生成されたルートのデータをそのまま取得して表示
       routeControl.on('routesfound', function(e) {
         var route = e.routes[0];
         var instructions = [];
@@ -402,12 +389,11 @@
         .catch(error => console.error("周辺施設取得エラー:", error));
     }
   
-    // 混雑情報の取得（Open511 APIを使用、本番エンドポイント（日本向けに調整済み））
+    // 混雑情報の取得（Open511 API、本番エンドポイント：日本向け）
     function fetchCongestionData() {
       var lat = userMarker ? userMarker.getLatLng().lat : 35.6895;
       var lon = userMarker ? userMarker.getLatLng().lng : 139.6917;
-      // 例: 日本向けのOpen511エンドポイント（実際に利用可能なエンドポイントに置き換えてください）
-      var url = "https://api.open511.org/v1/events";
+      var url = "https://open511.jp/events?point=" + lat + "," + lon + "&radius=500";
       fetch(url)
         .then(response => response.json())
         .then(data => {
@@ -427,7 +413,7 @@
     setInterval(fetchCongestionData, 5000);
     fetchCongestionData();
   
-    // コンパス表示機能（実際のコンパス風の作画）
+    // コンパス表示機能（実際のコンパス風）
     var compassVisible = false;
     function toggleCompass() {
       var comp = document.getElementById("compassDisplay");
@@ -438,13 +424,12 @@
       window.addEventListener("deviceorientation", function(event) {
         var heading = event.alpha;
         if (heading !== null) {
-          document.getElementById("compassHeading").textContent = Math.round(heading) + "°";
-          // 回転させる（実際のコンパス風の動作）
+          // 数値表示はコンパスオーバーレイ内に含めてもよいが、今回は矢印回転のみ
           document.getElementById("compassDisplay").style.transform = "rotate(" + Math.round(heading) + "deg)";
         }
       }, true);
     } else {
-      document.getElementById("compassHeading").textContent = "未対応";
+      console.log("DeviceOrientationEvent 非対応");
     }
   </script>
 </body>
