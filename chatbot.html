@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>迷子案内ボット</title>
+    <link rel="stylesheet" href="https://pyscript.net/alpha/pyscript.css" />
+    <script defer src="https://pyscript.net/alpha/pyscript.js"></script>
+    <style>
+        .button { border-radius: 50%; padding: 15px; margin: 10px; }
+        #addressForm, #inquiryMessage { display: none; }
+        #container { margin: 20px; }
+        .container-minimized { display: flex; flex-direction: column; align-items: center; }
+        .container-maximized { display: flex; flex-direction: column; align-items: flex-start; }
+    </style>
+</head>
+<body>
+    <div id="container" class="container-minimized">
+        <h2>迷子ですか？お問い合わせですか？</h2>
+        <button class="button" onclick="handleChoice('lost')">迷子です</button>
+        <button class="button" onclick="handleChoice('inquiry')">お問い合わせ</button>
+        
+        <div id="addressForm">
+            <p>住所を入力してください:</p>
+            <input type="text" id="address" placeholder="住所を入力">
+            <button onclick="submitAddress()">住所を送信</button>
+            <button onclick="getCurrentLocation()">わからない</button>
+        </div>
+        
+        <div id="inquiryMessage">
+            <p>只今お問い合わせはご利用頂けません。</p>
+        </div>
+    </div>
+
+    <py-script>
+        import requests
+
+        def get_coordinates(address):
+            url = f'https://nominatim.openstreetmap.org/search?q={address}&format=json'
+            response = requests.get(url)
+            data = response.json()
+            if data:
+                return data[0]['lat'], data[0]['lon']
+            return None, None
+
+        def find_nearby(lat, lon):
+            overpass_url = "http://overpass-api.de/api/interpreter"
+            overpass_query = f"""
+            [out:json];
+            (
+                node["shop"="mall"](around:500,{lat},{lon});
+                node["amenity"="police"](around:500,{lat},{lon});
+            );
+            out body;
+            """
+            response = requests.get(overpass_url, params={'data': overpass_query})
+            data = response.json()
+
+            places = []
+            for element in data['elements']:
+                name = element.get('tags', {}).get('name', '名前なし')
+                place_type = 'ショッピングモール' if 'shop' in element['tags'] else '交番'
+                places.append(f"{place_type}: {name}")
+
+            return places
+
+        def handle_choice(choice):
+            container = document.getElementById('container')
+            if choice == 'lost':
+                document.getElementById('addressForm').style.display = 'block'
+                document.getElementById('inquiryMessage').style.display = 'none'
+                container.classList.remove('container-minimized')
+                container.classList.add('container-maximized')
+            elif choice == 'inquiry':
+                document.getElementById('addressForm').style.display = 'none'
+                document.getElementById('inquiryMessage').style.display = 'block'
+                container.classList.remove('container-minimized')
+                container.classList.add('container-maximized')
+
+        def submit_address():
+            address = document.getElementById('address').value
+            if address:
+                lat, lon = get_coordinates(address)
+                if lat and lon:
+                    places = find_nearby(lat, lon)
+                    alert(f"近隣の施設:\n" + "\n".join(places))
+                else:
+                    alert("住所が見つかりませんでした。")
+            else:
+                alert("住所を入力してください。")
+
+        def get_current_location():
+            def success(position):
+                lat = position.coords.latitude
+                lon = position.coords.longitude
+                places = find_nearby(lat, lon)
+                alert(f"近隣の施設:\n" + "\n".join(places))
+
+            def error():
+                alert("現在地の取得に失敗しました。")
+
+            navigator.geolocation.getCurrentPosition(success, error)
+    </py-script>
+</body>
+</html>
+
