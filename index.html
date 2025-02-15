@@ -114,7 +114,7 @@
       font-size: 12px;
       cursor: pointer;
     }
-    /* コンパス表示オーバーレイ（実際のコンパス風の円形、背景画像付き） */
+    /* コンパス表示オーバーレイ（実際のコンパス風：矢印画像付き） */
     #compassDisplay {
       position: fixed;
       right: 10px;
@@ -122,8 +122,8 @@
       z-index: 1200;
       width: 80px;
       height: 80px;
-      background: url('https://cdn-icons-png.flaticon.com/512/2107/2107957.png') no-repeat center center;
-      background-size: cover;
+      background: url('https://upload.wikimedia.org/wikipedia/commons/3/32/Compass_rose_simple.svg') no-repeat center center;
+      background-size: contain;
       display: none;
     }
     /* ルート案内ステップのスタイル（背景白、画像付き） */
@@ -183,7 +183,7 @@
   <script src="https://unpkg.com/leaflet-control-geocoder@1.13.0/dist/Control.Geocoder.js"></script>
   
   <script>
-    // 地図の初期設定（東京）
+    // 地図初期設定（東京）
     var map = L.map('map').setView([35.6895, 139.6917], 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors'
@@ -238,7 +238,7 @@
         return;
       }
       var addresses = [];
-      addresses.push({ address: destAddr, priority: 1 }); // 目的地は優先度1
+      addresses.push({ address: destAddr, priority: 1 });
       var container = document.getElementById("waypointsContainer");
       var rows = container.getElementsByClassName("waypointRow");
       for (var i = 0; i < rows.length; i++) {
@@ -249,9 +249,7 @@
           addresses.push({ address: addr, priority: prio });
         }
       }
-      // 優先度順にソート（小さいほど先）
       addresses.sort(function(a, b) { return a.priority - b.priority; });
-  
       var geocoder = new L.Control.Geocoder.Nominatim();
       var geocodePromises = addresses.map(function(item) {
         return new Promise(function(resolve, reject) {
@@ -264,12 +262,11 @@
           });
         });
       });
-  
       Promise.all(geocodePromises)
         .then(function(results) {
           results.sort(function(a, b) { return a.priority - b.priority; });
           var waypoints = results.map(function(item) { return item.center; });
-          destinationCoordinates = waypoints[waypoints.length - 1]; // 最後が目的地
+          destinationCoordinates = waypoints[waypoints.length - 1];
           if (destinationMarker) map.removeLayer(destinationMarker);
           destinationMarker = L.marker(destinationCoordinates, { icon: redIcon })
                               .addTo(map).bindPopup("目的地").bringToFront();
@@ -282,7 +279,7 @@
         });
     }
   
-    // ルート案内（複数ウェイポイント対応、生成されたルートデータを独自に取得して表示）
+    // ルート案内（複数ウェイポイント対応）
     function startRoute(waypoints) {
       if (!waypoints || !userMarker) return;
       if (routeControl) {
@@ -291,7 +288,7 @@
       routeControl = L.Routing.control({
         waypoints: [L.latLng(userMarker.getLatLng())].concat(waypoints),
         routeWhileDragging: false,
-        show: false,  // 既定のルート案内表示を非表示
+        show: false,
         addWaypoints: false,
         createMarker: function() { return null; }
       }).addTo(map);
@@ -302,7 +299,7 @@
         } catch(e){ console.error(e); }
       }, 1000);
   
-      // 生成されたルートデータをそのまま取得して表示
+      // 生成されたルートのデータを取得して、独自のカスタムルート案内パネルに表示
       routeControl.on('routesfound', function(e) {
         var route = e.routes[0];
         var instructions = [];
@@ -331,11 +328,9 @@
         var img = document.createElement("img");
         img.src = iconUrl;
         p.appendChild(img);
-  
         var span = document.createElement("span");
         span.textContent = step.instruction + " (" + Math.round(step.distance) + "m)";
         p.appendChild(span);
-  
         stepsContainer.appendChild(p);
   
         // 5秒間隔で音声通知
@@ -392,7 +387,7 @@
         .catch(error => console.error("周辺施設取得エラー:", error));
     }
   
-    // 混雑情報の取得（Open511 API、本番エンドポイント：日本向け）
+    // 混雑情報の取得（Open511 API 本番エンドポイント：日本向け）
     function fetchCongestionData() {
       var lat = userMarker ? userMarker.getLatLng().lat : 35.6895;
       var lon = userMarker ? userMarker.getLatLng().lng : 139.6917;
