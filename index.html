@@ -74,7 +74,7 @@
       display: none;
       width: 250px;
     }
-    /* 混雑情報パネル */
+    /* 混雑情報パネル（右上、ルート案内パネルの下） */
     #congestionInfo {
       position: fixed;
       top: 320px;
@@ -122,7 +122,7 @@
       z-index: 1200;
       width: 80px;
       height: 80px;
-      background: url('https://upload.wikimedia.org/wikipedia/commons/3/32/Compass_rose_simple.svg') no-repeat center center;
+      background: url('https://cdn-icons-png.flaticon.com/512/2107/2107957.png') no-repeat center center;
       background-size: cover;
       display: none;
     }
@@ -183,7 +183,7 @@
   <script src="https://unpkg.com/leaflet-control-geocoder@1.13.0/dist/Control.Geocoder.js"></script>
   
   <script>
-    // 地図初期設定（東京）
+    // 地図の初期設定（東京）
     var map = L.map('map').setView([35.6895, 139.6917], 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors'
@@ -202,7 +202,7 @@
       iconAnchor: [12, 12]
     });
   
-    // 経由地動的追加（住所＋優先度＋削除ボタン）
+    // 経由地動的追加
     function addWaypoint() {
       var container = document.getElementById("waypointsContainer");
       var row = document.createElement("div");
@@ -215,7 +215,7 @@
       var prioInput = document.createElement("input");
       prioInput.type = "number";
       prioInput.placeholder = "優先度";
-      prioInput.value = 2; // 目的地は1
+      prioInput.value = 2;
   
       var deleteBtn = document.createElement("button");
       deleteBtn.textContent = "×";
@@ -264,6 +264,7 @@
           });
         });
       });
+  
       Promise.all(geocodePromises)
         .then(function(results) {
           results.sort(function(a, b) { return a.priority - b.priority; });
@@ -290,7 +291,7 @@
       routeControl = L.Routing.control({
         waypoints: [L.latLng(userMarker.getLatLng())].concat(waypoints),
         routeWhileDragging: false,
-        show: false,
+        show: false,  // 既定のルート案内表示を非表示
         addWaypoints: false,
         createMarker: function() { return null; }
       }).addTo(map);
@@ -301,7 +302,7 @@
         } catch(e){ console.error(e); }
       }, 1000);
   
-      // 生成されたルートのデータをそのまま取得して表示
+      // 生成されたルートデータをそのまま取得して表示
       routeControl.on('routesfound', function(e) {
         var route = e.routes[0];
         var instructions = [];
@@ -330,9 +331,11 @@
         var img = document.createElement("img");
         img.src = iconUrl;
         p.appendChild(img);
+  
         var span = document.createElement("span");
         span.textContent = step.instruction + " (" + Math.round(step.distance) + "m)";
         p.appendChild(span);
+  
         stepsContainer.appendChild(p);
   
         // 5秒間隔で音声通知
@@ -413,7 +416,7 @@
     setInterval(fetchCongestionData, 5000);
     fetchCongestionData();
   
-    // コンパス表示機能（実際のコンパス風）
+    // コンパス表示機能（実際のコンパス風に作画）
     var compassVisible = false;
     function toggleCompass() {
       var comp = document.getElementById("compassDisplay");
@@ -424,7 +427,7 @@
       window.addEventListener("deviceorientation", function(event) {
         var heading = event.alpha;
         if (heading !== null) {
-          // 数値表示はコンパスオーバーレイ内に含めてもよいが、今回は矢印回転のみ
+          // 回転させる
           document.getElementById("compassDisplay").style.transform = "rotate(" + Math.round(heading) + "deg)";
         }
       }, true);
