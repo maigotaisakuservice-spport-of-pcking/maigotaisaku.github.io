@@ -138,7 +138,7 @@
   <!-- コンパス表示ボタン -->
   <button id="compassButton" onclick="toggleCompass()">コンパス</button>
   <!-- コンパス表示オーバーレイ -->
-  <div id="compassDisplay">方位: <span id="compassHeading">--°</span></div>
+  <div id="compassDisplay">方位: <span id="compassHeading">--</span></div>
   
   <!-- Leaflet, Routing Machine, Geocoder のスクリプト -->
   <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
@@ -146,6 +146,27 @@
   <script src="https://unpkg.com/leaflet-control-geocoder@1.13.0/dist/Control.Geocoder.js"></script>
   
   <script>
+    // 詳細な方角を返す関数（16方位）
+    function getDetailedDirection(bearing) {
+      var directions = ["北", "北北東", "北東", "東北東", "東", "東南東", "南東", "南南東", "南", "南南西", "南西", "西南西", "西", "西北西", "北西", "北北西"];
+      var index = Math.round(bearing / 22.5) % 16;
+      return directions[index];
+    }
+  
+    // 緯度経度から方位（度）を計算する関数
+    function computeBearing(lat1, lon1, lat2, lon2) {
+      var toRad = Math.PI / 180;
+      var toDeg = 180 / Math.PI;
+      var φ1 = lat1 * toRad;
+      var φ2 = lat2 * toRad;
+      var Δλ = (lon2 - lon1) * toRad;
+      var y = Math.sin(Δλ) * Math.cos(φ2);
+      var x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+      var θ = Math.atan2(y, x);
+      var bearing = (θ * toDeg + 360) % 360;
+      return bearing;
+    }
+  
     // 地図初期設定（東京）
     var map = L.map('map').setView([35.6895, 139.6917], 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -166,6 +187,9 @@
       popupAnchor: [0, -28]
     });
   
+    // fallback用：前回位置の保持
+    var lastLat = null, lastLon = null;
+  
     // 現在地の更新（1秒ごと）
     function updateLocation() {
       if (navigator.geolocation) {
@@ -178,6 +202,16 @@
             userMarker.setLatLng([lat, lon]);
           }
           map.setView([lat, lon], 13);
+  
+          // fallback: 前回位置から移動方向を計算し、方角表示（DeviceOrientationEvent未対応の場合）
+          if (lastLat !== null && lastLon !== null) {
+            var bearing = computeBearing(lastLat, lastLon, lat, lon);
+            if (!window.DeviceOrientationEvent) {
+              document.getElementById("compassHeading").textContent = getDetailedDirection(bearing);
+            }
+          }
+          lastLat = lat;
+          lastLon = lon;
         }, function(err) {
           console.error("GPSエラー: " + err.message);
         });
@@ -363,16 +397,18 @@
       compassVisible = !compassVisible;
       comp.style.display = compassVisible ? "block" : "none";
     }
+  
+    // DeviceOrientationEvent が利用可能なら、センサーから取得した角度で更新
     if (window.DeviceOrientationEvent) {
       window.addEventListener("deviceorientation", function(event) {
         var heading = event.alpha;
         if (heading !== null) {
-          document.getElementById("compassHeading").textContent = Math.round(heading) + "°";
+          var detailedDirection = getDetailedDirection(heading);
+          document.getElementById("compassHeading").textContent = detailedDirection;
         }
       }, true);
-    } else {
-      document.getElementById("compassHeading").textContent = "未対応";
     }
+    // DeviceOrientationEventが利用できない場合は、updateLocation()のfallbackで更新するので何もしない
   </script>
 </body>
 </html>
