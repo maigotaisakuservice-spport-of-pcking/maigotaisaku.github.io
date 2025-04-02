@@ -269,7 +269,13 @@
         addWaypoints: false,
         createMarker: function() { return null; }
       }).addTo(map);
-  
+
+            // 生成されたルートレイヤーを背面に配置
+      setTimeout(function(){
+        try {
+          routeControl.getRouter()._routeControl._routeLayer.setZIndex(-1);
+        } catch(e){ console.error(e); }
+      }, 1000);
   
       // 生成されたルートのデータを取得して、独自のルート案内パネルに表示
       routeControl.on('routesfound', function(e) {
@@ -287,23 +293,7 @@
       });
     }
   
-    // 独自ルート案内の表示＆音声通知（画像付き）
-    function displayRouteInstructions(data) {
-      var stepsContainer = document.getElementById("routeSteps");
-      stepsContainer.innerHTML = "";
-      document.getElementById("routeInfo").style.display = "block";
-  
-      data.forEach(function(step, index) {
-        var p = document.createElement("p");
-        p.className = "route-step";
-        var iconUrl = getInstructionIcon(step.instruction);
-        var img = document.createElement("img");
-        img.src = iconUrl;
-        p.appendChild(img);
-        var span = document.createElement("span");
-        span.textContent = step.instruction + " (" + Math.round(step.distance) + "m)";
-        p.appendChild(span);
-        stepsContainer.appendChild(p);
+//な
   
         // 5秒間隔で音声通知
         setTimeout(function() {
