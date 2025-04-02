@@ -409,6 +409,27 @@
       }, true);
     }
     // DeviceOrientationEventが利用できない場合は、updateLocation()のfallbackで更新するので何もしない
+
+
+    //メンテナンス中ページ 転移スクリプト
+    
+    (function() {
+    // メンテナンス開始・終了時間（24時間表記）
+    const maintenanceStart = 20; // 例: 午後20時
+    const maintenanceEnd = 1;   // 例: 午前1時
+    const maintenancePage = "maintenance.html"; // メンテナンスページのURL
+
+    // 現在の時間を取得
+    const now = new Date();
+    const currentHour = now.getHours();
+
+    // メンテナンス時間内ならリダイレクト
+    if (currentHour >= maintenanceStart && currentHour < maintenanceEnd) {
+        window.location.href = maintenancePage;
+    }
+})();
+
+    
   </script>
 </body>
 </html>
