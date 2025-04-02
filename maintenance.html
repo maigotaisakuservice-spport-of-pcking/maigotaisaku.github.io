@@ -1,82 +1,111 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>メンテナンス中</title>
-    <style>
-        /* 背景アニメーション */
-        @keyframes bgAnimation {
-            0% { background-position: 0 0; }
-            100% { background-position: 100% 100%; }
-        }
-
-        body {
-            font-family: 'Arial', sans-serif;
-            text-align: center;
-            color: #fff;
-            background: linear-gradient(135deg, #2c3e50, #4b6cb7, #182848);
-            background-size: 400% 400%;
-            animation: bgAnimation 10s infinite alternate;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            margin: 0;
-        }
-
-        h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 10px rgba(255, 255, 255, 0.5);
-        }
-
-        p {
-            font-size: 1.2rem;
-            margin-bottom: 20px;
-        }
-
-        .loading {
-            width: 50px;
-            height: 50px;
-            border: 5px solid rgba(255, 255, 255, 0.3);
-            border-top: 5px solid #fff;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .return-message {
-            margin-top: 20px;
-            font-size: 1rem;
-            opacity: 0.8;
-        }
-    </style>
-    <script>
-        document.addEventListener("DOMContentLoaded", () => {
-    // メンテナンス設定
-    const maintenanceStart = 21; // メンテナンス開始時間（午後21時）
-    const maintenanceEnd   = 2; // メンテナンス終了時間（午前2時）
-
-    const now = new Date();
-    const currentHour = now.getHours(); // 時間（24時間表記）
-
-    // メンテナンス期間外の場合は index.html へリダイレクト
-    if (currentDay !== maintenanceDay || currentHour < maintenanceStart || currentHour >= maintenanceEnd) {
-        window.location.href = "index.html";
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>メンテナンス中</title>
+  <style>
+    /* 背景グラデーションと中央配置 */
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #2c3e50, #4b6cb7, #182848);
+      color: #fff;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
     }
-});
-    </script>
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 20px;
+      text-shadow: 2px 2px 10px rgba(0,0,0,0.3);
+    }
+    p {
+      font-size: 1.2rem;
+      margin-bottom: 20px;
+    }
+    /* 進捗バーコンテナ */
+    #progress-container {
+      width: 80%;
+      max-width: 500px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+      overflow: hidden;
+      margin: 20px auto;
+    }
+    /* 進捗バー */
+    #progress-bar {
+      width: 0%;
+      height: 20px;
+      background: #fff;
+      transition: width 1s linear;
+    }
+    /* 進捗パーセント表示 */
+    #progress-text {
+      margin-top: 10px;
+      font-size: 1rem;
+      opacity: 0.9;
+    }
+  </style>
 </head>
 <body>
-    <h1>メンテナンス中</h1>
-    <p>現在システムメンテナンスを行っています。しばらくお待ちください。</p>
-    <div class="loading"></div>
-    <p class="return-message">メンテナンス終了後、自動的にページが更新されます。</p>
+  <h1>メンテナンス中</h1>
+  <p>現在システムメンテナンスを行っています。<br>メンテナンス終了までお待ちください。</p>
+  
+  <!-- 進捗バー -->
+  <div id="progress-container">
+    <div id="progress-bar"></div>
+  </div>
+  <p id="progress-text">進捗: 0%</p>
+  
+  <!-- DOMContentLoaded は使用せず、要素配置後にスクリプトを実行 -->
+  <script>
+    (function() {
+      // メンテナンス設定
+      const maintenanceDay   = 3; // 金曜日
+      const maintenanceStart = 21; // 午前3時
+      const maintenanceEnd   = 23; // 午前4時
+
+      // メンテナンス期間中かどうかチェック（分・秒を含む）
+      function isMaintenanceActive() {
+        const now = new Date();
+        const currentTime = now.getHours() + now.getMinutes() / 60 + now.getSeconds() / 3600;
+        return now.getDay() === maintenanceDay && currentTime >= maintenanceStart && currentTime < maintenanceEnd;
+      }
+
+      // 進捗バー更新：メンテナンス開始から終了までの経過割合を算出
+      function updateProgress() {
+        const now = new Date();
+        const currentTime = now.getHours() + now.getMinutes() / 60 + now.getSeconds() / 3600;
+        // 進捗割合：0～1 の値。メンテナンス開始前なら 0、終了後なら 1（ただし終了時はリダイレクトします）
+        let progress = (currentTime - maintenanceStart) / (maintenanceEnd - maintenanceStart);
+        progress = Math.min(Math.max(progress, 0), 1);  // 0～1に制限
+        const progressPercent = Math.floor(progress * 100);
+
+        // 進捗バーとテキストの更新
+        var progressBar = document.getElementById("progress-bar");
+        if (progressBar) {
+          progressBar.style.width = progressPercent + "%";
+        }
+        var progressText = document.getElementById("progress-text");
+        if (progressText) {
+          progressText.textContent = "進捗: " + progressPercent + "%";
+        }
+
+        // もしメンテナンス期間外なら、元のページへリダイレクト
+        if (!isMaintenanceActive()) {
+          window.location.href = "index.html";
+        }
+      }
+
+      // 毎秒進捗を更新
+      setInterval(updateProgress, 1000);
+      // 初回更新
+      updateProgress();
+    })();
+  </script>
 </body>
 </html>
