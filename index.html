@@ -413,23 +413,7 @@
 
     //メンテナンス中ページ 転移スクリプト
     
-  document.addEventListener("DOMContentLoaded", () => {
-    // メンテナンス設定
-    const maintenanceDay = 3; // 金曜日（0: 日曜, 1: 月曜, ..., 5: 金曜, 6: 土曜）
-    const maintenanceStart = 21; // メンテナンス開始時間（午後21時）
-    const maintenanceEnd = 2;   // メンテナンス終了時間（午前2時）
-    const maintenancePage = "maintenance.html"; // メンテナンスページのURL
-
-    const now = new Date();
-    const currentDay = now.getDay();
-    const currentHour = now.getHours();
-
-    // 金曜日かつ指定時間内ならメンテナンスページにリダイレクト
-    if (currentDay === maintenanceDay && currentHour >= maintenanceStart && currentHour < maintenanceEnd) {
-        window.location.href = maintenancePage;
-    }
-});
-
+  
     
     
   </script>
