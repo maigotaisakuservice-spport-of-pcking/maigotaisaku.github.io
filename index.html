@@ -270,12 +270,6 @@
         createMarker: function() { return null; }
       }).addTo(map);
   
-      // 生成されたルートレイヤーを背面に配置
-      setTimeout(function(){
-        try {
-          routeControl.getRouter()._routeControl._routeLayer.setZIndex(-1);
-        } catch(e){ console.error(e); }
-      }, 1000);
   
       // 生成されたルートのデータを取得して、独自のルート案内パネルに表示
       routeControl.on('routesfound', function(e) {
