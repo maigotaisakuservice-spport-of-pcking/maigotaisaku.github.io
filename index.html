@@ -108,6 +108,23 @@
       margin-right: 5px;
     }
   </style>
+  <script>
+  // メンテナンス設定
+  (function() {
+    const maintenanceDay   = 3; // 水曜日 (0: 日曜, 1: 月曜, …, 5: 金曜, 6: 土曜)
+    const maintenanceStart = 21; // 午後3時
+    const maintenanceEnd   = 23; // 午後4時
+
+    const now = new Date();
+    // 分、秒も含めた時刻（時間の小数点表現）
+    const currentTime = now.getHours() + now.getMinutes() / 60 + now.getSeconds() / 3600;
+
+    // 金曜かつ開始～終了時間内なら maintenance.html へリダイレクト
+    if (now.getDay() === maintenanceDay && currentTime >= maintenanceStart && currentTime < maintenanceEnd) {
+      window.location.href = "maintenance.html";
+    }
+  })();
+</script>
 </head>
 <body>
   <!-- 地図表示 -->
@@ -409,13 +426,6 @@
       }, true);
     }
     // DeviceOrientationEventが利用できない場合は、updateLocation()のfallbackで更新するので何もしない
-
-
-    //メンテナンス中ページ 転移スクリプト
-    
-  
-    
-    
   </script>
 </body>
 </html>
