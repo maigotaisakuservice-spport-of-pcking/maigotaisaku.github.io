@@ -413,7 +413,7 @@
 
     //メンテナンス中ページ 転移スクリプト
     
-    (function() {
+    function() {
     // メンテナンス開始・終了時間（24時間表記）
     const maintenanceStart = 20; // 例: 午後20時
     const maintenanceEnd = 1;   // 例: 午前1時
@@ -427,7 +427,7 @@
     if (currentHour >= maintenanceStart && currentHour < maintenanceEnd) {
         window.location.href = maintenancePage;
     }
-})();
+}();
 
     
   </script>
