@@ -58,19 +58,22 @@
         }
     </style>
     <script>
-        (function() {
-            // メンテナンス終了時間
-            const maintenanceEnd = 22; // 午前1時
+        document.addEventListener("DOMContentLoaded", () => {
+    // メンテナンス設定
+    const maintenanceDay   = 3; // 金曜日（0: 日曜, 1: 月曜, …, 5: 金曜, 6: 土曜）
+    const maintenanceStart = 21; // メンテナンス開始時間（午後21時）
+    const maintenanceEnd   = 2; // メンテナンス終了時間（午前2時）
 
-            // 現在の時間を取得
-            const now = new Date();
-            const currentHour = now.getHours();
+    const now = new Date();
+    const currentDay  = now.getDay();  // 曜日
+    const currentHour = now.getHours(); // 時間（24時間表記）
 
-            // メンテナンス終了後、自動で元のページへ戻る
-            if (currentHour >= maintenanceEnd) {
-                window.location.href = "index.html"; // 元のページ
-            }
-        })();
+    // メンテナンス期間外の場合は index.html へリダイレクト
+    if (currentDay !== maintenanceDay || currentHour < maintenanceStart || currentHour >= maintenanceEnd) {
+        window.location.href = "index.html";
+    }
+});
+
     </script>
 </head>
 <body>
