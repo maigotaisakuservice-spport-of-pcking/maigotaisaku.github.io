@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>各機能アクセスページ</title>
+  <style>
+    /* Global Styles */
+    body {
+      margin: 0;
+      font-family: 'Helvetica Neue', sans-serif;
+      background: linear-gradient(135deg, #141E30, #243B55);
+      color: #fff;
+    }
+    header {
+      text-align: center;
+      padding: 20px;
+      font-size: 2.5rem;
+      background: rgba(0, 0, 0, 0.5);
+      /* Animation Sample */
+      animation: anim1 5s infinite alternate;
+    }
+    .container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      padding: 20px;
+    }
+    .card {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+      transition: transform 0.3s, box-shadow 0.3s;
+      /* Animation Sample */
+      animation: anim2 3s infinite alternate;
+    }
+    .card:hover {
+      transform: scale(1.05);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+    }
+    .card a {
+      color: #fff;
+      text-decoration: none;
+      font-size: 1.2rem;
+      display: block;
+      margin: 10px 0;
+      /* Animation Sample */
+      animation: anim3 4s infinite alternate;
+    }
+    .card p {
+      margin: 0;
+      padding: 10px;
+      /* Animation Sample */
+      animation: anim4 6s infinite alternate;
+    }
+    /* ---------------------------
+       以下、100種類のCSSアニメーション定義
+       （サンプルとしてアニメーション内容はシンプルな変化を設定）
+    ----------------------------- */
+    @keyframes anim1 { 0% { opacity: 0.5; } 100% { opacity: 1; } }
+    @keyframes anim2 { 0% { transform: translateY(0px); } 100% { transform: translateY(-10px); } }
+    @keyframes anim3 { 0% { letter-spacing: 0px; } 100% { letter-spacing: 3px; } }
+    @keyframes anim4 { 0% { transform: scale(1); } 100% { transform: scale(1.02); } }
+    @keyframes anim5 { 0% { background-position: 0% 0%; } 100% { background-position: 100% 100%; } }
+    @keyframes anim6 { 0% { filter: hue-rotate(0deg); } 100% { filter: hue-rotate(360deg); } }
+    @keyframes anim7 { 0% { border-radius: 10px; } 100% { border-radius: 50px; } }
+    @keyframes anim8 { 0% { box-shadow: 0 4px 10px rgba(0,0,0,0.3); } 100% { box-shadow: 0 8px 20px rgba(0,0,0,0.5); } }
+    @keyframes anim9 { 0% { transform: rotate(0deg); } 100% { transform: rotate(5deg); } }
+    @keyframes anim10 { 0% { opacity: 1; } 100% { opacity: 0.8; } }
+    @keyframes anim11 { 0% { transform: translateX(0px); } 100% { transform: translateX(10px); } }
+    @keyframes anim12 { 0% { transform: translateX(0px); } 100% { transform: translateX(-10px); } }
+    @keyframes anim13 { 0% { color: #fff; } 100% { color: #ccc; } }
+    @keyframes anim14 { 0% { background-color: rgba(255,255,255,0.1); } 100% { background-color: rgba(255,255,255,0.2); } }
+    @keyframes anim15 { 0% { padding: 20px; } 100% { padding: 25px; } }
+    @keyframes anim16 { 0% { margin: 20px; } 100% { margin: 25px; } }
+    @keyframes anim17 { 0% { border: 2px solid transparent; } 100% { border: 2px solid #fff; } }
+    @keyframes anim18 { 0% { text-shadow: 1px 1px 2px #000; } 100% { text-shadow: 2px 2px 4px #000; } }
+    @keyframes anim19 { 0% { letter-spacing: 0px; } 100% { letter-spacing: 2px; } }
+    @keyframes anim20 { 0% { line-height: 1.2; } 100% { line-height: 1.4; } }
+    @keyframes anim21 { 0% { transform: scale(1); } 100% { transform: scale(1.05); } }
+    @keyframes anim22 { 0% { transform: scale(1); } 100% { transform: scale(0.95); } }
+    @keyframes anim23 { 0% { opacity: 1; } 100% { opacity: 0.9; } }
+    @keyframes anim24 { 0% { opacity: 1; } 100% { opacity: 0.8; } }
+    @keyframes anim25 { 0% { filter: brightness(1); } 100% { filter: brightness(1.2); } }
+    @keyframes anim26 { 0% { filter: brightness(1); } 100% { filter: brightness(0.8); } }
+    @keyframes anim27 { 0% { transform: translateY(0px); } 100% { transform: translateY(5px); } }
+    @keyframes anim28 { 0% { transform: translateY(0px); } 100% { transform: translateY(-5px); } }
+    @keyframes anim29 { 0% { transform: translateX(0px); } 100% { transform: translateX(5px); } }
+    @keyframes anim30 { 0% { transform: translateX(0px); } 100% { transform: translateX(-5px); } }
+    @keyframes anim31 { 0% { border: 0px; } 100% { border: 2px solid #fff; } }
+    @keyframes anim32 { 0% { border: 2px solid #fff; } 100% { border: 2px solid transparent; } }
+    @keyframes anim33 { 0% { border-radius: 10px; } 100% { border-radius: 20px; } }
+    @keyframes anim34 { 0% { border-radius: 20px; } 100% { border-radius: 10px; } }
+    @keyframes anim35 { 0% { margin: 10px; } 100% { margin: 15px; } }
+    @keyframes anim36 { 0% { margin: 15px; } 100% { margin: 10px; } }
+    @keyframes anim37 { 0% { padding: 10px; } 100% { padding: 15px; } }
+    @keyframes anim38 { 0% { padding: 15px; } 100% { padding: 10px; } }
+    @keyframes anim39 { 0% { transform: rotate(0deg); } 100% { transform: rotate(3deg); } }
+    @keyframes anim40 { 0% { transform: rotate(0deg); } 100% { transform: rotate(-3deg); } }
+    @keyframes anim41 { 0% { background-color: rgba(0,0,0,0.1); } 100% { background-color: rgba(0,0,0,0.2); } }
+    @keyframes anim42 { 0% { background-color: rgba(0,0,0,0.2); } 100% { background-color: rgba(0,0,0,0.1); } }
+    @keyframes anim43 { 0% { color: #fff; } 100% { color: #eee; } }
+    @keyframes anim44 { 0% { color: #eee; } 100% { color: #fff; } }
+    @keyframes anim45 { 0% { transform: scale(1); } 100% { transform: scale(1.1); } }
+    @keyframes anim46 { 0% { transform: scale(1); } 100% { transform: scale(0.9); } }
+    @keyframes anim47 { 0% { letter-spacing: 1px; } 100% { letter-spacing: 3px; } }
+    @keyframes anim48 { 0% { letter-spacing: 3px; } 100% { letter-spacing: 1px; } }
+    @keyframes anim49 { 0% { text-shadow: 1px 1px 2px #000; } 100% { text-shadow: 3px 3px 6px #000; } }
+    @keyframes anim50 { 0% { text-shadow: 3px 3px 6px #000; } 100% { text-shadow: 1px 1px 2px #000; } }
+    @keyframes anim51 { 0% { opacity: 1; } 100% { opacity: 0.95; } }
+    @keyframes anim52 { 0% { opacity: 0.95; } 100% { opacity: 1; } }
+    @keyframes anim53 { 0% { transform: translateY(0); } 100% { transform: translateY(2px); } }
+    @keyframes anim54 { 0% { transform: translateY(2px); } 100% { transform: translateY(0); } }
+    @keyframes anim55 { 0% { transform: translateX(0); } 100% { transform: translateX(2px); } }
+    @keyframes anim56 { 0% { transform: translateX(2px); } 100% { transform: translateX(0); } }
+    @keyframes anim57 { 0% { background-size: 100%; } 100% { background-size: 110%; } }
+    @keyframes anim58 { 0% { background-size: 110%; } 100% { background-size: 100%; } }
+    @keyframes anim59 { 0% { border-color: #fff; } 100% { border-color: #ccc; } }
+    @keyframes anim60 { 0% { border-color: #ccc; } 100% { border-color: #fff; } }
+    @keyframes anim61 { 0% { box-shadow: none; } 100% { box-shadow: 0 2px 4px rgba(0,0,0,0.3); } }
+    @keyframes anim62 { 0% { box-shadow: 0 2px 4px rgba(0,0,0,0.3); } 100% { box-shadow: none; } }
+    @keyframes anim63 { 0% { transform: rotate(0deg); } 100% { transform: rotate(2deg); } }
+    @keyframes anim64 { 0% { transform: rotate(2deg); } 100% { transform: rotate(0deg); } }
+    @keyframes anim65 { 0% { filter: contrast(100%); } 100% { filter: contrast(120%); } }
+    @keyframes anim66 { 0% { filter: contrast(120%); } 100% { filter: contrast(100%); } }
+    @keyframes anim67 { 0% { transform: skew(0deg); } 100% { transform: skew(5deg); } }
+    @keyframes anim68 { 0% { transform: skew(5deg); } 100% { transform: skew(0deg); } }
+    @keyframes anim69 { 0% { opacity: 1; } 100% { opacity: 0.85; } }
+    @keyframes anim70 { 0% { opacity: 0.85; } 100% { opacity: 1; } }
+    @keyframes anim71 { 0% { transform: translateY(0); } 100% { transform: translateY(3px); } }
+    @keyframes anim72 { 0% { transform: translateY(3px); } 100% { transform: translateY(0); } }
+    @keyframes anim73 { 0% { transform: translateX(0); } 100% { transform: translateX(3px); } }
+    @keyframes anim74 { 0% { transform: translateX(3px); } 100% { transform: translateX(0); } }
+    @keyframes anim75 { 0% { color: #fff; } 100% { color: #f0f0f0; } }
+    @keyframes anim76 { 0% { color: #f0f0f0; } 100% { color: #fff; } }
+    @keyframes anim77 { 0% { background-color: #4b79a1; } 100% { background-color: #283e51; } }
+    @keyframes anim78 { 0% { background-color: #283e51; } 100% { background-color: #4b79a1; } }
+    @keyframes anim79 { 0% { transform: scale(1); } 100% { transform: scale(1.02); } }
+    @keyframes anim80 { 0% { transform: scale(1.02); } 100% { transform: scale(1); } }
+    @keyframes anim81 { 0% { border-width: 1px; } 100% { border-width: 3px; } }
+    @keyframes anim82 { 0% { border-width: 3px; } 100% { border-width: 1px; } }
+    @keyframes anim83 { 0% { padding: 20px; } 100% { padding: 22px; } }
+    @keyframes anim84 { 0% { padding: 22px; } 100% { padding: 20px; } }
+    @keyframes anim85 { 0% { margin: 20px; } 100% { margin: 18px; } }
+    @keyframes anim86 { 0% { margin: 18px; } 100% { margin: 20px; } }
+    @keyframes anim87 { 0% { letter-spacing: 1px; } 100% { letter-spacing: 2px; } }
+    @keyframes anim88 { 0% { letter-spacing: 2px; } 100% { letter-spacing: 1px; } }
+    @keyframes anim89 { 0% { opacity: 1; } 100% { opacity: 0.92; } }
+    @keyframes anim90 { 0% { opacity: 0.92; } 100% { opacity: 1; } }
+    @keyframes anim91 { 0% { transform: translateY(0); } 100% { transform: translateY(4px); } }
+    @keyframes anim92 { 0% { transform: translateY(4px); } 100% { transform: translateY(0); } }
+    @keyframes anim93 { 0% { transform: rotate(0deg); } 100% { transform: rotate(10deg); } }
+    @keyframes anim94 { 0% { transform: rotate(10deg); } 100% { transform: rotate(0deg); } }
+    @keyframes anim95 { 0% { filter: saturate(100%); } 100% { filter: saturate(120%); } }
+    @keyframes anim96 { 0% { filter: saturate(120%); } 100% { filter: saturate(100%); } }
+    @keyframes anim97 { 0% { border-color: #fff; } 100% { border-color: #000; } }
+    @keyframes anim98 { 0% { border-color: #000; } 100% { border-color: #fff; } }
+    @keyframes anim99 { 0% { transform: scale(1); } 100% { transform: scale(1.03); } }
+    @keyframes anim100 { 0% { transform: scale(1.03); } 100% { transform: scale(1); } }
+  </style>
+</head>
+<body>
+  <header>各機能アクセスページ</header>
+  <div class="container">
+    <div class="card">
+      <a href="chatbot.html"><p>迷子の場合はこちら</p></a>
+    </div>
+    <div class="card">
+      <a href="eventinformation.html"><p>イベント情報検索</p></a>
+    </div>
+    <div class="card">
+      <a href="startus.html"><p>システムステータス</p></a>
+    </div>
+    <div class="card">
+      <a href="500.html"><p>ユーザー認証 (ログイン)</p></a>
+    </div>
+    <div class="card">
+      <a href="infometion.html"><p>最新のお知らせ</p></a>
+    </div>
+    <div class="card">
+      <a href="shopinfometion.html"><p>周辺店舗検索</p></a>
+    </div>
+  </div>
+</body>
+</html>
