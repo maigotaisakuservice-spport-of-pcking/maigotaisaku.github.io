@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>近くのイベント情報</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Helvetica Neue', sans-serif;
+      background: linear-gradient(135deg, #e0f7fa, #80deea);
+      color: #333;
+      padding: 20px;
+    }
+    header {
+      font-size: 2.5rem;
+      text-align: center;
+      color: #fff;
+      background: linear-gradient(135deg, #00838f, #26c6da);
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      margin-bottom: 30px;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    .controls input[type="text"],
+    .controls select {
+      padding: 10px 15px;
+      font-size: 1.1rem;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      flex: 1;
+      min-width: 200px;
+    }
+    .controls button {
+      padding: 10px 20px;
+      font-size: 1.1rem;
+      border: none;
+      background: #00838f;
+      color: #fff;
+      cursor: pointer;
+      border-radius: 5px;
+      transition: background 0.3s;
+    }
+    .controls button:hover {
+      background: #006064;
+    }
+    .events-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
+    }
+    .event-card {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      width: 300px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.3s;
+    }
+    .event-card:hover {
+      transform: translateY(-5px);
+    }
+    .event-title {
+      font-size: 1.6rem;
+      margin-bottom: 10px;
+      color: #00838f;
+      font-weight: bold;
+    }
+    .event-date, .event-address {
+      font-size: 1.1rem;
+      margin-bottom: 8px;
+      color: #555;
+    }
+    .event-description {
+      font-size: 1rem;
+      color: #666;
+      margin-top: auto;
+    }
+    .no-events {
+      text-align: center;
+      font-size: 1.2rem;
+      color: #888;
+      width: 100%;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <header>近くのイベント情報</header>
+
+  <!-- 検索・ジャンル入力エリア -->
+  <div class="controls">
+    <input type="text" id="keyword" placeholder="キーワード検索（例：音楽、展示）">
+    <select id="genre">
+      <option value="">すべてのジャンル</option>
+      <option value="music">音楽</option>
+      <option value="art">アート</option>
+      <option value="tech">テック</option>
+      <option value="food">グルメ</option>
+      <!-- その他ジャンルを必要に応じて追加 -->
+    </select>
+    <button id="searchBtn">検索</button>
+  </div>
+
+  <!-- イベント表示エリア -->
+  <div class="events-container" id="eventsContainer">
+    <!-- イベントカードがここに生成されます -->
+  </div>
+  <p class="no-events" id="noEventsMsg" style="display:none;">該当するイベントは見つかりませんでした。</p>
+
+  <script>
+    let userPosition = null;
+    let currentEvents = []; // 取得したイベント全件
+
+    // ユーザーの現在地取得
+    function getCurrentPosition() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          position => {
+            userPosition = {
+              lat: position.coords.latitude,
+              lon: position.coords.longitude
+            };
+            // 初回イベント取得
+            fetchEvents();
+          },
+          error => {
+            alert("現在地を取得できませんでした。位置情報の許可を確認してください。");
+          }
+        );
+      } else {
+        alert("Geolocationに対応していません。");
+      }
+    }
+
+    // connpass API を利用してイベント情報を取得（現在地から1km以内に絞る）
+    function fetchEvents() {
+      if (!userPosition) return;
+      // 例：キーワードなしで全件取得。後で検索条件でフィルタリング
+      const url = `https://connpass.com/api/v1/event/?lat=${userPosition.lat}&lon=${userPosition.lon}&range=1&count=50`;
+      fetch(url)
+        .then(response => response.json())
+        .then(data => {
+          currentEvents = data.events || [];
+          displayEvents(currentEvents);
+        })
+        .catch(err => {
+          console.error("イベント情報取得エラー:", err);
+        });
+    }
+
+    // 検索条件に基づきイベントをフィルタリングして表示
+    function displayEvents(events) {
+      const container = document.getElementById("eventsContainer");
+      container.innerHTML = "";
+      const noEventsMsg = document.getElementById("noEventsMsg");
+      if (events.length === 0) {
+        noEventsMsg.style.display = "block";
+        return;
+      } else {
+        noEventsMsg.style.display = "none";
+      }
+      events.forEach(event => {
+        // イベント実施住所（address）と会場（place）情報を表示
+        const title = event.title;
+        const date = event.started_at ? event.started_at.substring(0, 10) : "日付不明";
+        const address = event.address ? event.address : (event.place ? event.place : "住所情報なし");
+        const description = event.description ? event.description.replace(/<[^>]+>/g, "").substring(0, 100) + "..." : "";
+
+        const card = document.createElement("div");
+        card.className = "event-card";
+        card.innerHTML = `
+          <div class="event-title">${title}</div>
+          <div class="event-date">開催日: ${date}</div>
+          <div class="event-address">会場: ${address}</div>
+          <div class="event-description">${description}</div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // 検索・ジャンル入力によるフィルタリング
+    function filterEvents() {
+      const keyword = document.getElementById("keyword").value.trim().toLowerCase();
+      const genre = document.getElementById("genre").value.trim().toLowerCase();
+      let filtered = currentEvents.filter(event => {
+        // キーワード検索：タイトル、説明、会場情報で検索
+        const text = (event.title + " " + (event.description || "") + " " + (event.address || event.place || "")).toLowerCase();
+        const keywordMatch = keyword === "" || text.includes(keyword);
+        // ジャンル検索：ここではシンプルに、イベントタイトルにジャンル名が含まれるかで判定
+        const genreMatch = genre === "" || event.title.toLowerCase().includes(genre);
+        return keywordMatch && genreMatch;
+      });
+      displayEvents(filtered);
+    }
+
+    // イベントリスナー
+    document.getElementById("searchBtn").addEventListener("click", filterEvents);
+
+    // ページ読み込み時に現在地を取得
+    getCurrentPosition();
+  </script>
+</body>
+</html>
