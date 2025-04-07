@@ -248,9 +248,16 @@
       });
     }
     function generateMagnet(name) {
-      const hash = btoa(name).slice(0, 20);
-      return `magnet:?xt=urn:btih:${hash}`;
-    }
+  // Unicode文字列を安全にbase64にエンコードする関数
+  function b64EncodeUnicode(str) {
+    return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, 
+      function(match, p1) {
+        return String.fromCharCode('0x' + p1);
+      }));
+  }
+  const hash = b64EncodeUnicode(name).slice(0, 20);
+  return `magnet:?xt=urn:btih:${hash}`;
+}
     function updatePeerMarker(peerId, lat, lng) {
       if (!connectedPeers[peerId]) {
         const marker = L.marker([lat, lng]).addTo(map).bindPopup("相手");
