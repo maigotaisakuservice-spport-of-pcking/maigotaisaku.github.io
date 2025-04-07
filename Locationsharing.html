@@ -224,15 +224,6 @@
     
     /********** P2P位置情報共有（WebTorrent利用） **********/
     const client = new WebTorrent();
-    async function generateMagnetAsync(name) {
-      // SHA-1ダイジェストを使って正しい40桁のハッシュを生成
-      const encoder = new TextEncoder();
-      const data = encoder.encode(name);
-      const hashBuffer = await crypto.subtle.digest('SHA-1', data);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-      return `magnet:?xt=urn:btih:${hashHex}`;
-    }
     async function joinRoom() {
       const inputCode = document.getElementById("codeInput").value.trim();
       if (!inputCode) return alert("コードを入力してください");
