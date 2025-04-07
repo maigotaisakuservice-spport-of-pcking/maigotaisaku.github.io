@@ -142,7 +142,7 @@
     
     let userPosition = null;  // {lat, lng}
     let torrent = null;       // WebTorrentオブジェクト
-    let connectedPeers = {};  // P2P接続中のペアのマーカー
+    let connectedPeers = {};  // P2P接続中のピアIDごとのマーカー
     let bluetoothLinks = {};  // Bluetoothリンク情報（例: device.id → { name, linkedAt }）
     
     let historyRecords = JSON.parse(localStorage.getItem("historyRecords") || "[]");
@@ -154,8 +154,7 @@
     let myMarker = null;
     
     /********** 暗号論的乱数によるワンタイムPIN生成 **********/
-    function generateSecurePIN() {
-      // 5桁のPINを生成（0〜length-1を均等乱数）
+    async function generateSecurePIN() {
       const array = new Uint32Array(5);
       window.crypto.getRandomValues(array);
       const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -165,8 +164,8 @@
       }
       return pin;
     }
-    function issuePIN() {
-      currentPIN = generateSecurePIN();
+    async function issuePIN() {
+      currentPIN = await generateSecurePIN();
       pinExpiry = Date.now() + PIN_VALIDITY_MS;
       document.getElementById("myCodeDisplay").textContent = currentPIN;
       addHistoryRecord("PIN発行: " + currentPIN);
@@ -225,11 +224,20 @@
     
     /********** P2P位置情報共有（WebTorrent利用） **********/
     const client = new WebTorrent();
-    function joinRoom() {
+    async function generateMagnetAsync(name) {
+      // SHA-1ダイジェストを使って正しい40桁のハッシュを生成
+      const encoder = new TextEncoder();
+      const data = encoder.encode(name);
+      const hashBuffer = await crypto.subtle.digest('SHA-1', data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      return `magnet:?xt=urn:btih:${hashHex}`;
+    }
+    async function joinRoom() {
       const inputCode = document.getElementById("codeInput").value.trim();
       if (!inputCode) return alert("コードを入力してください");
       const roomName = `位置共有-${inputCode}`;
-      const magnetURI = generateMagnet(roomName);
+      const magnetURI = await generateMagnetAsync(roomName);
       client.add(magnetURI, { announce: [] }, torrentObj => {
         torrent = torrentObj;
         addHistoryRecord("P2Pルーム参加: " + inputCode);
@@ -247,17 +255,6 @@
         });
       });
     }
-    function generateMagnet(name) {
-  // Unicode文字列を安全にbase64にエンコードする関数
-  function b64EncodeUnicode(str) {
-    return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, 
-      function(match, p1) {
-        return String.fromCharCode('0x' + p1);
-      }));
-  }
-  const hash = b64EncodeUnicode(name).slice(0, 20);
-  return `magnet:?xt=urn:btih:${hash}`;
-}
     function updatePeerMarker(peerId, lat, lng) {
       if (!connectedPeers[peerId]) {
         const marker = L.marker([lat, lng]).addTo(map).bindPopup("相手");
@@ -267,10 +264,10 @@
       }
     }
     function sendMyPosition(lat, lng) {
-      if (torrent && torrent._peers) {
+      if (torrent && torrent.wires && torrent.wires.length) {
         const data = JSON.stringify({ lat, lng });
-        Object.values(torrent._peers).forEach(peer => {
-          peer.send(data);
+        torrent.wires.forEach(wire => {
+          wire.send(data);
         });
       }
     }
@@ -314,7 +311,7 @@
       alert(`${device.name} にリンク申請を送信しました。相手が承認すればリンク成立します。`);
       addHistoryRecord("Bluetoothリンク申請: " + device.name);
       speakMessage("Bluetoothリンク申請を送信しました。");
-      // リンク成立後はお気に入り登録ボタン表示処理等を追加可能
+      // リンク成立後は、履歴に記録し、リンク済み情報として保存・お気に入り登録ボタンを表示する処理を追加可能
     }
     
     /********** 初期化 **********/
