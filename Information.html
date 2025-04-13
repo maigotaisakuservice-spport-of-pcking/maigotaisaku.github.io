@@ -140,7 +140,11 @@
     </div>
 
     <footer>
-        <p>&copy; 2025 パソコン大魔王</p>
+<form id="newsletter-form">
+  <input type="email" name="email" placeholder="メールアドレスを入力" required>
+  <button type="submit">登録</button>
+</form>
+    <p>&copy; 2025 パソコン大魔王</p>
     </footer>
 
     <!-- 広告エリア -->
@@ -178,6 +182,22 @@
         };
         // 5秒ごとに広告を切り替え
         setInterval(showAd, 5000);
+        document.getElementById("newsletter-form").addEventListener("submit", function(e) {
+  e.preventDefault();
+  const email = this.email.value;
+
+     // メルマガ送信スクリプト       
+  fetch("<<さっきコピーしたWebアプリのURL>>", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: "email=" + encodeURIComponent(email)
+  })
+  .then(res => res.text())
+  .then(msg => alert("登録しました！"))
+  .catch(err => alert("送信失敗しました。"));
+});
     </script>
 </body>
 </html>
