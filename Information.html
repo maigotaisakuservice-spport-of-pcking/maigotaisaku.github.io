@@ -51,31 +51,6 @@
             padding: 10px;
             text-align: center;
         }
-        /* 広告スタイル */
-        .ad-container {
-            display: none;
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background-color: #4CAF50;
-            color: white;
-            padding: 15px;
-            text-align: center;
-            box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.1);
-            z-index: 9999;
-        }
-        .ad-container button {
-            background-color: #ff5722;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            cursor: pointer;
-            border-radius: 5px;
-        }
-        .ad-container button:hover {
-            background-color: #e64a19;
-        }
          /* 情報・お問い合わせリンクボタン */
     #infoButton {
       position: fixed;
@@ -145,47 +120,42 @@
   <button type="submit">登録</button>
 </form>
     <p>&copy; 2025 パソコン大魔王</p>
+
+        <style>
+#newsletter-form {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+#newsletter-form input[type="email"] {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+  min-width: 240px;
+}
+
+#newsletter-form button {
+  padding: 8px 16px;
+  background-color: #007BFF;
+  color: white;
+  border: none;
+  font-size: 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+#newsletter-form button:hover {
+  background-color: #0056b3;
+}
+</style>
+
+        
     </footer>
-
-    <!-- 広告エリア -->
-    <div class="ad-container" id="ad-container">
-        <p id="ad-content"></p>
-        <button onclick="toggleAd()">広告を閉じる</button>
-    </div>
-
     <script>
-        // リアルな広告のリスト（リンクを削除した内容）
-        const ads = [
-            "【AHAzon】大人気商品が最大50%オフ！今すぐチェック！",
-            "【BRA】2025春夏コレクション登場！新しいスタイルを手に入れよう。",
-            "【HOB】温泉旅行パック、今すぐ予約で限定割引！",
-            "【コネッコ】新商品入荷！お得な価格でゲットしよう。",
-            "【バニクロ】冬のコーディネートを完成させよう。",
-            "【パソコン大魔王チャンネル】ゲーム攻略法を学べる！YouTubeチャンネルはこちら！ <a href='http://www.youtube.com/@pc.game.and.kanken' target='_blank'>リンクはこちら</a>"
-        ];
-
-        // 広告をランダムで表示
-        function showAd() {
-            const randomAd = ads[Math.floor(Math.random() * ads.length)];
-            document.getElementById("ad-content").innerHTML = randomAd;
-            document.getElementById("ad-container").style.display = "block";
-        }
-
-        // 広告を閉じる
-        function toggleAd() {
-            document.getElementById("ad-container").style.display = "none";
-        }
-
-        // ページ読み込み時に広告を表示
-        window.onload = function() {
-            showAd();
-        };
-        // 5秒ごとに広告を切り替え
-        setInterval(showAd, 5000);
-        document.getElementById("newsletter-form").addEventListener("submit", function(e) {
-  e.preventDefault();
-  const email = this.email.value;
-
      // メルマガ送信スクリプト       
   fetch("https://script.google.com/macros/s/AKfycbwR3ZaBYtqaqSz_EM4GhhU_gTeVfHPo5Q5kpAVSVVtB7rz1ggmRatv_z5ZWRUn4V9Y94A/exec", {
     method: "POST",
