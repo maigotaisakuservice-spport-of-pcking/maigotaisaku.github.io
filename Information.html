@@ -156,7 +156,7 @@
         
     </footer>
     <script>
-     // メルマガ送信スクリプト       
+     // メルマガ登録スクリプト       
   fetch("https://script.google.com/macros/s/AKfycbwR3ZaBYtqaqSz_EM4GhhU_gTeVfHPo5Q5kpAVSVVtB7rz1ggmRatv_z5ZWRUn4V9Y94A/exec", {
     method: "POST",
     headers: {
@@ -165,8 +165,8 @@
     body: "email=" + encodeURIComponent(email)
   })
   .then(res => res.text())
-  .then(msg => alert("登録しました！"))
-  .catch(err => alert("送信失敗しました。"));
+  .then(msg => alert("登録が完了しました"))
+  .catch(err => alert("登録に失敗しました。"));
 });
     </script>
 </body>
