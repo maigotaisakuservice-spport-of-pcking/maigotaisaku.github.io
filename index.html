@@ -443,33 +443,6 @@
       }, true);
     }
     // DeviceOrientationEventが利用できない場合は、updateLocation()のfallbackで更新するので何もしない
-
-    
-   // 利用規約チェックシステム(これより下)
-    
-    //Cookieを取得
-function getCookie(name) {
-  const cname = name + "=";
-  const decodedCookie = decodeURIComponent(document.cookie);
-  const ca = decodedCookie.split(';');
-  for(let i = 0; i < ca.length; i++) {
-    let c = ca[i];
-    while (c.charAt(0) == ' ') c = c.substring(1);
-    if (c.indexOf(cname) == 0) return c.substring(cname.length, c.length);
-  }
-  return "";
-}
-
-// ページ読み込み時のチェック
-document.addEventListener('DOMContentLoaded', () => {
-  const currentPage = window.location.pathname.split('/').pop();
-  const consent = getCookie('riyook');
-
-// riyiki.html 以外のページで同意がなければリダイレクト
-  if (currentPage !== 'termsofservice.html' && consent !== 'agreed') {
-    window.location.href = 'termsofservice.html';
-  }
-    
   </script>
 </body>
 </html>
