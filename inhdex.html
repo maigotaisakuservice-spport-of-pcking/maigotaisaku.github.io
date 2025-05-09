@@ -150,4 +150,100 @@
 
   <button id="consent-button" disabled>全ての利用規約に同意してサービスの利用を開始する</button>
 
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+  const termsSections = document.querySelectorAll('.terms-section');
+  const consentButton = document.getElementById('consent-button');
+  const remainingCount = document.getElementById('remaining-count');
+  let checksCompleted = 0;
+
+  termsSections.forEach(section => {
+    const content = section.querySelector('.terms-content');
+    const checkbox = section.querySelector('input[type="checkbox"]');
+    const checkmark = section.querySelector('.scroll-checkmark');
+    const readAloudBtn = section.querySelector('.read-aloud-btn');
+    let timerCompleted = false;
+    let scrolledToBottom = false;
+
+    // タイマー制限
+    setTimeout(() => {
+      timerCompleted = true;
+    }, 10000);
+
+    // スクロールイベント
+    content.addEventListener('scroll', () => {
+      if (!timerCompleted || scrolledToBottom) return;
+      if (content.scrollTop + content.clientHeight >= content.scrollHeight) {
+        scrolledToBottom = true;
+        checkbox.disabled = false;
+        checkmark.textContent = '✅';
+      }
+    });
+
+    // チェックボックスの変更イベント
+    checkbox.addEventListener('change', () => {
+      if (checkbox.checked) {
+        checksCompleted++;
+      } else {
+        checksCompleted--;
+      }
+      const remaining = termsSections.length - checksCompleted;
+      remainingCount.textContent = `あと${remaining}項目の同意が必要です`;
+      if (remaining === 0) {
+        consentButton.disabled = false;
+        consentButton.classList.add('enabled');
+      } else {
+        consentButton.disabled = true;
+        consentButton.classList.remove('enabled');
+      }
+    });
+
+    // 音声読み上げボタン
+    readAloudBtn.addEventListener('click', () => {
+      const utterance = new SpeechSynthesisUtterance(content.textContent);
+      speechSynthesis.speak(utterance);
+    });
+  });
+});
+
+          // Cookieをセット
+function setCookie(name, value, days) {
+  const d = new Date();
+  d.setTime(d.getTime() + (days*24*60*60*1000));
+  const expires = "expires="+ d.toUTCString();
+  document.cookie = name + "=" + value + ";" + expires + ";path=/";
+}
+
+// Cookieを取得
+function getCookie(name) {
+  const cname = name + "=";
+  const decodedCookie = decodeURIComponent(document.cookie);
+  const ca = decodedCookie.split(';');
+  for(let i = 0; i < ca.length; i++) {
+    let c = ca[i];
+    while (c.charAt(0) == ' ') c = c.substring(1);
+    if (c.indexOf(cname) == 0) return c.substring(cname.length, c.length);
+  }
+  return "";
+}
+
+// ページ読み込み時のチェック
+document.addEventListener('DOMContentLoaded', () => {
+  const currentPage = window.location.pathname.split('/').pop();
+  const consent = getCookie('riyook');
+
+// riyiki.html 以外のページで同意がなければリダイレクト
+  if (currentPage !== 'riyiki.html' && consent !== 'agreed') {
+    window.location.href = 'riyiki.html';
+  }
+
   
+  // 同意ボタン押下時にCookie保存（同意ボタンのIDが consent-button の場合）
+  const consentButton = document.getElementById('consent-button');
+  if (consentButton) {
+    consentButton.addEventListener('click', () => {
+      setCookie('riyook', 'agreed', 30); // 30日間保存
+    });
+  }
+});
+  </script>
