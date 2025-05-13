@@ -5,10 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>絶対に迷子にならないナビ</title>
   
-  <!-- Firebase Script -->
-  <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-database.js"></script>
-  
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
   <style>
@@ -448,32 +444,6 @@
       }, true);
     }
     // DeviceOrientationEventが利用できない場合は、updateLocation()のfallbackで更新するので何もしない
-  </script>
-  <script>
-    const firebaseConfig = {
-    apiKey: "AIzaSyCbn6SCqnFRt0jn-MRh7gPmBTFkJJ5dPk4",
-    authDomain: "map-service-access-counter.firebaseapp.com",
-    databaseURL: "https://map-service-access-counter-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "map-service-access-counter",
-    storageBucket: "map-service-access-counter.firebasestorage.app",
-    messagingSenderId: "229385241044",
-    appId: "1:229385241044:web:6d824e6d1989921783d641"
-  };
-
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    const counterRef = db.ref('visits');
-
-    counterRef.transaction(current => {
-      return (current || 0) + 1;
-    }).then(result => {
-      const currentCount = result.snapshot.val();
-      console.log("アクセス数:", currentCount);
-
-      if (currentCount > 0) {
-        window.location.href = "wait.html";
-      }
-    });
   </script>
 </body>
 </html>
