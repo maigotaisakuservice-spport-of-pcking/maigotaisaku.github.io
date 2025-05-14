@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>絶対に迷子にならないナビ</title>
 
-   <script id="usercentrics-cmp" src="https://web.cmp.usercentrics.eu/ui/loader.js" data-settings-id="YPle7wMpyCXtkr" async></script>
+<!-- Tarte au Citron  Cookie-同意調査ツール  読み込み -->
+<script src="https://cdn.jsdelivr.net/npm/tarteaucitronjs@1.12.1/tarteaucitron.min.js"></script>
   
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
@@ -133,15 +134,62 @@
 
   
   
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-0YEFNPM6J1"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
+<!-- Google tag (gtag.js) と Cokkie同意バナースクリプト -->
+  <script>
+tarteaucitron.init({
+  "privacyUrl": "", // プライバシーポリシーのURL（任意）
 
-  gtag('config', 'G-0YEFNPM6J1');
-</script>
+  "hashtag": "#tarteaucitron", 
+  "highPrivacy": true, // デフォルトでオフ（オンをユーザーが選ぶ）
+  "orientation": "bottom", // 表示位置：bottom または top
+  "showAlertSmall": true,
+  "cookieslist": true,
+  "adblocker": false,
+  "acceptAllCta": true,
+  "moreInfoLink": true,
+  "mandatory": false,
+  "handleBrowserDNTRequest": false,
+  "useExternalCss": false,
+  "readmoreLink": "/privacy.html", // 詳細リンク
+  "translations": {
+    "ja": {
+      "alertBigPrivacy": "当サイトではCookieを使用して、より良いユーザー体験を提供します。",
+      "acceptAll": "すべて許可する",
+      "denyAll": "すべて拒否する",
+      "personalize": "カスタマイズ"
+    }
+  },
+  "lang": "ja"
+});
+
+// Googleアナリティクス（gtag.js）を登録
+tarteaucitron.services.googleanalytics = {
+  "key": "googleanalytics",
+  "type": "analytic",
+  "name": "Google Analytics",
+  "uri": "https://policies.google.com/privacy",
+  "needConsent": true,
+  "cookies": ['_ga', '_gat', '_gid'],
+  "js": function () {
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-0YEFNPM6J1'); // ←あなたのGA測定IDに置き換えてください
+
+    var script = document.createElement('script');
+    script.async = true;
+    script.src = 'https://www.googletagmanager.com/gtag/js?id=G-0YEFNPM6J1';
+    document.head.appendChild(script);
+  },
+  "fallback": function () {
+    // 同意が得られなかった場合の処理（何もしない）
+  }
+};
+
+// サービスとして読み込む
+tarteaucitron.job = tarteaucitron.job || [];
+tarteaucitron.job.push('googleanalytics');
+  </script>
 
   
   
