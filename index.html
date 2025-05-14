@@ -7,6 +7,19 @@
 
 <!-- Tarte au Citron  Cookie-同意調査ツール  読み込み -->
 <script src="https://cdn.jsdelivr.net/npm/tarteaucitronjs@1.12.1/tarteaucitron.min.js"></script>
+<style>
+/* 最前面に表示・常に見えるようにする */
+#tarteaucitronRoot,
+#tarteaucitronAlertBig,
+.tarteaucitronAlertBigBottom {
+  z-index: 2147483647 !important; /* 最大値 */
+  position: fixed !important;
+  top: 0 !important;
+  left: 0;
+  width: 100%;
+  pointer-events: all;
+}
+</style>
   
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
